@@ -22,22 +22,20 @@ Installation
 
 - Install from setup.py
 
-  ```python
   python setup.py install
-  ```
+
 
 Usage
 -----
 
 Initiate with SPI mode and opening port
 
-```python
-usb = usbiss.USBISS(port, 'spi', spi_mode=2, freq=500000)
+  usb = usbiss.USBISS(port, 'spi', spi_mode=2, freq=500000)
 
-usb.open()
+  usb.open()
 
-print(usb.get_iss_info())
-```
+  print(usb.get_iss_info())
+
 
 More Information
 ----------------
