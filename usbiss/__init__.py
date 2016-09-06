@@ -25,9 +25,8 @@ def iss_spi_divisor(sck):
 
 class USBISS(object):
 
-    def __init__(self, port, mode, **kwargs):
-        self.mode = mode
-        self.dummy_bytes = kwargs.get('dummy_bytes', 0)
+    def __init__(self, port, iss_mode, **kwargs):
+        self.iss_mode = iss_mode
 
         # Open serial port
         serial_opts = {"port": port,
@@ -42,14 +41,31 @@ class USBISS(object):
         self.get_iss_info()
         self.get_iss_serial_no()
 
-        if self.mode == 'spi':
-            clk_phase = kwargs.get('clk_phase', 0)
-            if 0 <= clk_phase < 4:
-                clk_phase = 0x90 + clk_phase
+        if self.iss_mode == 'spi':
+            # Select the SPI mode of USB-ISS's SPI operating mode
+            if 'spi_mode' in kwargs:
+                spi_mode = kwargs.get('spi_mode', 0)
+                if 0 <= spi_mode < 4:
+                    # Expose the the SPI mode to external applications
+                    # where self.mode is same as spidev.SpiDev.mode
+                    if spi_mode == 0:
+                        self.mode = 0
+                    elif spi_mode == 1:
+                        self.mode = 2
+                    elif spi_mode == 2:
+                        self.mode = 1
+                    elif spi_mode == 3:
+                        self.mode = 3
+                    # Add signal for SPI switch
+                    spi_mode = 0x90 + spi_mode
+                else:
+                    error = ("The value of spi_mode, %s, is not "
+                             "between 0 and 3" % (spi_mode))
+                    raise ValueError(error)
             else:
-                error = ("The value of clk_phase, %s, is not "
-                         "between 0 and 3" % (clk_phase))
-                raise ValueError(error)
+                raise TypeError("Missing argument for spi_mode for SPI"
+                                "operating mode")
+            # Select frequency of USB-ISS's SPI operating mode
             if 'freq' in kwargs:
                 freq = kwargs.get('freq')
                 sck_divisor = iss_spi_divisor(freq)
@@ -57,11 +73,11 @@ class USBISS(object):
                     error = "The value of sck_divisor, %s, is not between 0 and 255" % (sck_divisor)
                     raise ValueError(error)
             else:
-                raise TypeError("Missing argument for frequency for SPI mode")
-            self.mode = 1
-            set_bytes = [clk_phase, sck_divisor]
-            msg = ("Initializing USB-ISS in SPI mode with %s clk_phase and %s "
-                   "sck_divisor" % (clk_phase, sck_divisor))
+                raise TypeError("Missing argument for frequency for SPI"
+                                "operating mode")
+            set_bytes = [spi_mode, sck_divisor]
+            msg = ("Initializing USB-ISS in SPI mode with %s spi_mode and %s "
+                   "sck_divisor" % (spi_mode, sck_divisor))
             print(msg)
 
         # Configure USB-ISS
@@ -121,6 +137,7 @@ class USBISS(object):
 
 
     def xfer(self, data):
+        # spidev function for transferring bytes to port
         self.serial.write(bytearray([0x61] + data))
         response = self.serial.read(1 + len(data))
         status = response[0]
