@@ -39,11 +39,9 @@ The project was developed during a NERC's placement at University of Leeds.
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
+Inspired by `Waggle's alphasense.py`_, where most of USB-ISS functions was copied over.
+
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
-
-Inspired by:
-
 .. _`Waggle's alphasense.py`: https://github.com/waggle-sensor/waggle
-
 
