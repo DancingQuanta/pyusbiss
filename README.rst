@@ -4,7 +4,7 @@ pyusbiss
 
 A Python module for interfacing with USB-ISS multifunction USB Communication Module
 
-* Untested!
+* Working for SPI using only xfer function, see description in spidev docs.
 * Python 3 (2 todo)
 * Free software: MIT license
 * Documentation: https://pyusbiss.readthedocs.io.
@@ -24,7 +24,8 @@ https://www.robot-electronics.co.uk/htm/usb_iss_tech.htm#Response Bytes
 TODO
 ----
 
-* For each operation mode, the instance of this module must pretend to be of other modules such as spidev for spi so it can be used to control various sensors via their classes.
+* SPI mode is nearly implemented and other operating modes needs to be added as well. 
+* Any future addition of operating modes must have same method names as the hardware libraries, eg, xfer from spidev must be used in this module.
 
 Applications
 ------------
@@ -32,7 +33,9 @@ Applications
 * Alphasense OPCs via `dhhagan's py-opc module <https://github.com/dhhagan/py-opc/>`_ 
 
 Credits
----------
+-------
+
+The project was developed during a NERC's placement at University of Leeds.
 
 This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
 
@@ -41,6 +44,6 @@ This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypack
 
 Inspired by:
 
-.. _`Waggle's alphasense.py`: https://github.com/waggle-sensor/waggle/
+.. _`Waggle's alphasense.py`: https://github.com/waggle-sensor/waggle
 
 
