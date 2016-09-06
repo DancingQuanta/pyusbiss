@@ -10,25 +10,24 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 requirements = ['pyserial']
+__version__ = '0.1.0'
 
 setup(
     name='pyusbiss',
-    version='0.1.0',
+    version=__version__,
     description="A Python module for interfacing with USB-ISS multifunction USB Communication Module",
     long_description=readme + '\n\n' + history,
     author="Andrew Tolmie",
     author_email='andytheseeker@gmail.com',
     url='https://github.com/DancingQuanta/pyusbiss',
-    packages=[
-        'pyusbiss',
-    ],
+    packages=['usbiss'],
     package_dir={'pyusbiss':
                  'usbiss'},
     include_package_data=True,
     install_requires=requirements,
     license="MIT license",
     zip_safe=False,
-    keywords='pyusbiss',
+    keywords=['pyusbiss', 'USB-ISS', 'SPI', 'I2C', 'serial'],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
