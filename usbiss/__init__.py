@@ -67,6 +67,16 @@ class USBISS(object):
         # Configure USB-ISS
         self.set_iss_mode(set_bytes)
 
+    def open(self):
+        """Open Serial port to USB-ISS
+        """
+        self.serial.open()
+
+    def close(self):
+        """Close Serial port to USB-ISS
+        """
+        self.serial.close()
+
     def get_iss_info(self):
         """ Get information about the USB-ISS
         Querying will return three bytes;

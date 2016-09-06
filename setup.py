@@ -23,7 +23,7 @@ setup(
         'pyusbiss',
     ],
     package_dir={'pyusbiss':
-                 'pyusbiss'},
+                 'usbiss'},
     include_package_data=True,
     install_requires=requirements,
     license="MIT license",
