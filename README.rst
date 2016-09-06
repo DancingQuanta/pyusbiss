@@ -17,6 +17,26 @@ Features
 * Query status of USB-ISS
 * Send bytes to components via USB-ISS and read from components via USB-ISS
 
+Installation
+------------
+
+- Install from setup.py
+
+  ```
+  python setup.py install
+  ```
+
+Usage
+-----
+
+Initiate with SPI mode and opening port
+
+```
+usb = usbiss.USBISS(port, 'spi', clk_phase=2, freq=500000)
+usb.open()
+print(usb.get_iss_info())
+```
+
 More Information
 ----------------
 https://www.robot-electronics.co.uk/htm/usb_iss_tech.htm#Response Bytes
