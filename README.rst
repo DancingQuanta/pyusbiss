@@ -30,7 +30,7 @@ TODO
 Applications
 ------------
 
-* Alphasense OPCs via `dhhagan's py-opc module <https://github.com/dhhagan/py-opc/>`_ 
+* Alphasense OPCs via `dhhagan's py-opc module <https://github.com/dhhagan/py-opc/>`_ using SPI protocol.
 
 Credits
 -------
