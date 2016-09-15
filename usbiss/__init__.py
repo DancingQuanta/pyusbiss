@@ -140,8 +140,11 @@ class USBISS(object):
         # spidev function for transferring bytes to port
         self.serial.write(bytearray([0x61] + data))
         response = self.serial.read(1 + len(data))
-        status = response[0]
-        if status == 0:
-            raise RuntimeError('USB-ISS: Transmission Error')
-        decoded = [struct.unpack('B', response[i+1])[0] for i in range(0, len(data))]
-        return decoded
+        if len(response) != 0:
+            status = response[0]
+            if status == 0:
+                raise RuntimeError('USB-ISS: Transmission Error')
+            decoded = [struct.unpack('B', response[i+1])[0] for i in range(0, len(data))]
+            return decoded
+        else:
+            raise RuntimeError('USB-ISS: Transmission Error: No bytes received!')
