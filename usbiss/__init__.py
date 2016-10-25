@@ -144,7 +144,9 @@ class USBISS(object):
             status = response[0]
             if status == 0:
                 raise RuntimeError('USB-ISS: Transmission Error')
-            decoded = [struct.unpack('B', response[i+1])[0] for i in range(0, len(data))]
+
+            decoded = [struct.unpack('B', response[i + 1: i + 2])[0] for i in range(0, len(data))]
+            
             return decoded
         else:
             raise RuntimeError('USB-ISS: Transmission Error: No bytes received!')
