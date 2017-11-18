@@ -57,3 +57,9 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# GdH
+.bat
+.exe
+.DLL
+.ps1
