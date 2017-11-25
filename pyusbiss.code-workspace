@@ -3,5 +3,8 @@
 		{
 			"path": "usbiss"
 		}
-	]
+	],
+	"settings": {
+		"python.pythonPath": "C:\\Users\\Geert\\Documents\\Project\\pyusbiss\\Scripts\\python.exe"
+	}
 }

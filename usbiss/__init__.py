@@ -5,8 +5,10 @@ The technical specification can be found here:
     https://www.robot-electronics.co.uk/htm/usb_iss_tech.htm
 
 Some of the code is derived from: https://github.com/waggle-sensor/waggle/
-"""
 
+GdH - pip install pyserial
+"""
+#
 import serial
 import struct
 
@@ -150,3 +152,9 @@ class USBISS(object):
             return decoded
         else:
             raise RuntimeError('USB-ISS: Transmission Error: No bytes received!')
+
+t=USBISS('COM3', 'spi',spi_mode = 1, freq = 25000)
+p=t.xfer([0x45])
+print(type(p))
+for i in p:
+    print(i)
