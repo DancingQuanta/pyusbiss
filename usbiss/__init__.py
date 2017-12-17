@@ -26,6 +26,8 @@ def iss_spi_divisor(sck):
 
 
 class USBISS(object):
+    pinfunction = [] # I/O mode : PinFunction (adc, OutputL, OutputH, input)
+    pinstatus=0x00   # I/O mode : pinstatus for input and output status
 
     def __init__(self, port, iss_mode, **kwargs):
         self.iss_mode = iss_mode
@@ -81,8 +83,27 @@ class USBISS(object):
             msg = ("Initializing USB-ISS in SPI mode with %s spi_mode and %s "
                    "sck_divisor" % (spi_mode, sck_divisor))
             print(msg)
-
-        # Configure USB-ISS
+        # GdH - ToDo - Add the io mode
+        #
+        # Format : USB = USBISS(port, 'io', pin1 = 'outputL', pin2 = 'outputH', pin3 = 'input', pin4 = 'adc')
+        if self.iss_mode == 'io':
+            io_type = 0x00000000 # Default all outputL
+            io_types={"input" : 0b10, "outputL" : 0b00, "outputH" : 0b01, "adc" : 0b11}
+            # check mode for each pin
+            for i in range(1,5):
+                pin='pin'+str(i)
+                if pin in kwargs:
+                    io_mode = kwargs.get(pin)
+                    io_pinbits = io_types[io_mode]
+                    #ToDo
+                    io_type = io_type +  io_pinbits * (2**((i-1)*2))
+            # IO_MODE for I/O = 0x00
+            # IO_TYPE = settings for individual pins
+            set_bytes = [0x00, io_type]
+            msg = ("Initializing USB-ISS in I/O mode with IO_TYPE %s" % (io_type))
+            print(msg)
+        #
+        # Configure USB-ISS, set_bytes is set based on mode
         self.set_iss_mode(set_bytes)
 
     def open(self):
@@ -152,9 +173,40 @@ class USBISS(object):
             return decoded
         else:
             raise RuntimeError('USB-ISS: Transmission Error: No bytes received!')
+    def SetPinOn(self, pin):
+        '''
+        Set pin High
+        0x63 - set pinstatus. returns 0xFF is succesfull, else 0x00
+        '''
+        mask = 1 << (pin-1)
+        self.pinstatus = self.pinstatus | mask
 
+    def SetPinOff(self, pin):
+        '''
+        Set pin Low
+        0x63 - reset pinstatus. returns 0xFF is succesfull, exle 0x00
+        '''
+        mask = 0xFF
+        mask = 0 << (pin - 1)
+        self.pinstatus = self.pinstatus & mask
+    
+    def GetPin(self, pin):
+        '''
+        Get de pinstatus for inputpins. Output for all pins 
+        in self.pinstatus
+        '''
+        set_bytes = [0x64]
+        mask = 1 << (pin-1)
+        return(self.pinstatus & mask != 0)
+
+        self.set_iss_mode(set_bytes)
+# GdH - SPI mode - Andrew Tolmie
 t=USBISS('COM3', 'spi',spi_mode = 1, freq = 25000)
 p=t.xfer([0x45])
 print(type(p))
 for i in p:
     print(i)
+'''
+# GdH - I/O mode - Geert de Haan Test
+t=USBISS('COM3',  "io", pin1="OutputL", pin2="OutputH", pin3="input", pin4="adc")
+
