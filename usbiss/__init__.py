@@ -9,8 +9,9 @@ Some of the code is derived from: https://github.com/waggle-sensor/waggle/
 GdH - pip install pyserial
 """
 #
-import serial
 import struct
+import serial
+
 
 __author__ = 'Andrew Tolmie'
 __email__ = 'andytheseeker@gmail.com'
@@ -26,8 +27,10 @@ def iss_spi_divisor(sck):
 
 
 class USBISS(object):
+    '''
+    '''
     pinfunction = [] # I/O mode : PinFunction (adc, OutputL, OutputH, input)
-    pinstatus=0x00   # I/O mode : pinstatus for input and output status
+    pinstatus = 0x00   # I/O mode : pinstatus for input and output status
 
     def __init__(self, port, iss_mode, **kwargs):
         self.iss_mode = iss_mode
@@ -83,6 +86,8 @@ class USBISS(object):
             msg = ("Initializing USB-ISS in SPI mode with %s spi_mode and %s "
                    "sck_divisor" % (spi_mode, sck_divisor))
             print(msg)
+            
+            self.set_iss_mode(set_bytes)
         # GdH - ToDo - Add the io mode
         #
         # Format : USB = USBISS(port, 'io', pin1 = 'outputL', pin2 = 'outputH', pin3 = 'input', pin4 = 'adc')
@@ -173,6 +178,7 @@ class USBISS(object):
             return decoded
         else:
             raise RuntimeError('USB-ISS: Transmission Error: No bytes received!')
+
     def SetPinOn(self, pin):
         '''
         Set pin High
@@ -180,6 +186,10 @@ class USBISS(object):
         '''
         mask = 1 << (pin-1)
         self.pinstatus = self.pinstatus | mask
+        self.serial.write(bytearray([0x63] + self.pinstatus))
+        response = self.serial.read(1)
+        if response == 0:
+            raise RuntimeError('USB-ISS: SetPinOn - Configuration error ')
 
     def SetPinOff(self, pin):
         '''
@@ -199,14 +209,20 @@ class USBISS(object):
         mask = 1 << (pin-1)
         return(self.pinstatus & mask != 0)
 
-        self.set_iss_mode(set_bytes)
+    def GetADC(self, pin):
+        '''
+        '''
+        
+
+
 # GdH - SPI mode - Andrew Tolmie
 t=USBISS('COM3', 'spi',spi_mode = 1, freq = 25000)
 p=t.xfer([0x45])
 print(type(p))
-for i in p:
-    print(i)
+for a in p:
+    print(a)
 '''
 # GdH - I/O mode - Geert de Haan Test
-t=USBISS('COM3',  "io", pin1="OutputL", pin2="OutputH", pin3="input", pin4="adc")
+'''
+# t=USBISS('COM3',  "io", pin1="OutputL", pin2="OutputH", pin3="input", pin4="adc")
 
