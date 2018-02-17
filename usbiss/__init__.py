@@ -31,6 +31,7 @@ class USBISS(object):
     '''
     pinfunction = [] # I/O mode : PinFunction (adc, OutputL, OutputH, input)
     pinstatus = 0x00   # I/O mode : pinstatus for input and output status
+    Vcc = 5          # USB-ISS Operating voltage
 
     def __init__(self, port, iss_mode, **kwargs):
         self.iss_mode = iss_mode
@@ -88,24 +89,29 @@ class USBISS(object):
             print(msg)
             
             self.set_iss_mode(set_bytes)
-        # GdH - ToDo - Add the io mode
+        # GdH - Add the io mode
         #
         # Format : USB = USBISS(port, 'io', pin1 = 'outputL', pin2 = 'outputH', pin3 = 'input', pin4 = 'adc')
+        # ToDo - 27-1-18 - Add an option to indicate the operating voltage for the ADC
+
         if self.iss_mode == 'io':
             io_type = 0x00000000 # Default all outputL
+            # Dict maps type to USBISS controlbyte
             io_types={"input" : 0b10, "outputL" : 0b00, "outputH" : 0b01, "adc" : 0b11}
             # check mode for each pin
             for i in range(1,5):
-                pin='pin'+str(i)
-                if pin in kwargs:
-                    io_mode = kwargs.get(pin)
+                searchpin='pin'+str(i)
+                if searchpin in kwargs:
+                    io_mode = kwargs.get(searchpin)
+                    if io_mode == 'outputH':
+                        self.SetPinOn(i)
                     io_pinbits = io_types[io_mode]
                     #ToDo
                     io_type = io_type +  io_pinbits * (2**((i-1)*2))
             # IO_MODE for I/O = 0x00
             # IO_TYPE = settings for individual pins
             set_bytes = [0x00, io_type]
-            msg = ("Initializing USB-ISS in I/O mode with IO_TYPE %s" % (io_type))
+            msg = ("Initializing USB-ISS in I/O mode with IO_TYPE %s" % bin(io_type))
             print(msg)
         #
         # Configure USB-ISS, set_bytes is set based on mode
@@ -186,7 +192,7 @@ class USBISS(object):
         '''
         mask = 1 << (pin-1)
         self.pinstatus = self.pinstatus | mask
-        self.serial.write(bytearray([0x63] + self.pinstatus))
+        self.serial.write(bytearray([0x63] + [self.pinstatus]))
         response = self.serial.read(1)
         if response == 0:
             raise RuntimeError('USB-ISS: SetPinOn - Configuration error ')
@@ -199,30 +205,85 @@ class USBISS(object):
         mask = 0xFF
         mask = 0 << (pin - 1)
         self.pinstatus = self.pinstatus & mask
-    
+        self.serial.write(bytearray([0x63] + [self.pinstatus]))
+        response = self.serial.read(1)
+        if response == 0:
+            raise RuntimeError('USB-ISS: SetPinOff - Configuration error ')
+
     def GetPin(self, pin):
         '''
         Get de pinstatus for inputpins. Output for all pins 
         in self.pinstatus
+        This is used to get the current state of all digital I/O pins.
+        Just send the single byte:
+        GETPINS command (0x64)
+        The response is a single byte indicating the Pin States as defined above.
         '''
         set_bytes = [0x64]
+        self.serial.write(set_bytes)
+        response = self.serial.read(1)
+        self.pinstatus = response
         mask = 1 << (pin-1)
         return(self.pinstatus & mask != 0)
 
     def GetADC(self, pin):
+        '''.
+        The GetADC command will convert the requested channel (IO pin number)
+        and return the two byte result. The result is the high byte and low byte
+        of a 16 bit number.
+        The A/D conversion is a 10-bit conversion so the range is 0-1023 for a voltage
+        swing of Vss to Vcc on the pin.
         '''
-        '''
-        
+        set_bytes=[0x65, pin]
+        self.serial.write(bytearray(set_bytes))
+        response = self.serial.read(2)
+        return(self.Vcc/1024*response)
 
 
 # GdH - SPI mode - Andrew Tolmie
-t=USBISS('COM3', 'spi',spi_mode = 1, freq = 25000)
-p=t.xfer([0x45])
-print(type(p))
-for a in p:
-    print(a)
+# t=USBISS('COM3', 'spi',spi_mode = 1, freq = 25000)
+#p=t.xfer([0x45])
+#print(type(p))
+#for a in p:
+#    print(a)
 '''
 # GdH - I/O mode - Geert de Haan Test
 '''
-# t=USBISS('COM3',  "io", pin1="OutputL", pin2="OutputH", pin3="input", pin4="adc")
-
+# Init Test
+# t=USBISS('COM3',  "io", pin1="outputL", pin2="outputH", pin3="input", pin4="adc")
+# t.SetPinOn(1)
+#t.SetPinOff(2)
+#
+# Testing 1 - 
+#
+# All pins as OutputL
+t=USBISS('COM3',  "io", pin1="outputL", pin2="outputL", pin3="outputL", pin4="outputL")
+# pin switching as fast as possible
+while True:
+    t.SetPinOn(2)
+    t.SetPinOff(2)
+#
+# Results - 2,9Khz (2,4 KHz - 3 KHz), 4,32 V
+# Jitter is immense
+# Testing 2 -
+#
+# All Pins as input
+# t.GetPin(1)
+#
+# Testing 3 - 
+#
+# Closed loop - Pin as Output connected to input, controls output
+# Check timing with scope
+#
+# Testing 4 - Check on Timing stability
+#
+# Create a puls with a fixed time
+# Check timingdelta's with Picoscope and DS1054Z
+#
+# Test 5 - ADC
+# 
+# Determine max aquisition frequency
+#
+# Test 6 - ADC Accuracy
+#
+# Supply reference voltages - Check conversionresult
