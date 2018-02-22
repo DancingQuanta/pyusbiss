@@ -31,7 +31,7 @@ class USBISS(object):
     '''
     pinfunction = [] # I/O mode : PinFunction (adc, OutputL, OutputH, input)
     pinstatus = 0x00   # I/O mode : pinstatus for input and output status
-    Vcc = 5          # USB-ISS Operating voltage
+    Vcc = 4.9        # USB-ISS Operating voltage
 
     def __init__(self, port, iss_mode, **kwargs):
         self.iss_mode = iss_mode
@@ -222,9 +222,10 @@ class USBISS(object):
         set_bytes = [0x64]
         self.serial.write(set_bytes)
         response = self.serial.read(1)
-        self.pinstatus = response
+        self.pinstatus = response[0]
+        # print("self.pinstatus", bin(self.pinstatus))
         mask = 1 << (pin-1)
-        return(self.pinstatus & mask != 0)
+        return(int(self.pinstatus) & mask != 0)
 
     def GetADC(self, pin):
         '''.
@@ -237,7 +238,10 @@ class USBISS(object):
         set_bytes=[0x65, pin]
         self.serial.write(bytearray(set_bytes))
         response = self.serial.read(2)
-        return(self.Vcc/1024*response)
+        print(self.Vcc/1024)
+        print(response)
+        rcalc =(255*response[0])+response[1]
+        return(self.Vcc/1024*rcalc)
 
 
 # GdH - SPI mode - Andrew Tolmie
@@ -257,18 +261,24 @@ class USBISS(object):
 # Testing 1 - 
 #
 # All pins as OutputL
-t=USBISS('COM3',  "io", pin1="outputL", pin2="outputL", pin3="outputL", pin4="outputL")
+# t=USBISS('COM3',  "io", pin1="outputL", pin2="outputL", pin3="outputL", pin4="outputL")
 # pin switching as fast as possible
-while True:
-    t.SetPinOn(2)
-    t.SetPinOff(2)
+# while True:
+#    t.SetPinOn(2)
+#    t.SetPinOff(2)
 #
 # Results - 2,9Khz (2,4 KHz - 3 KHz), 4,32 V
 # Jitter is immense
 # Testing 2 -
 #
-# All Pins as input
-# t.GetPin(1)
+# All Pin 1 as Input, Pin2 has a Led connected
+# t=USBISS('COM3',  "io", pin1="input", pin2="outputL", pin3="outputL", pin4="outputL")
+# while True:
+#    inp = t.GetPin(1)
+#    if inp:
+#        t.SetPinOn(2)
+#    else:
+#        t.SetPinOff(2)
 #
 # Testing 3 - 
 #
@@ -287,3 +297,7 @@ while True:
 # Test 6 - ADC Accuracy
 #
 # Supply reference voltages - Check conversionresult
+t=USBISS('COM3',  "io", pin1="input", pin2="outputL", pin3="adc", pin4="outputL")
+
+Voltage = t.GetADC(3)
+print('Voltage = ', Voltage)
