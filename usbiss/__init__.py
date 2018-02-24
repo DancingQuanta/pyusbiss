@@ -48,14 +48,14 @@ class USBISS(object):
                 if 0 <= spi_mode < 4:
                     # Expose the the SPI mode to external applications
                     # where self.mode is same as spidev.SpiDev.mode
-                    if spi_mode == 0:
-                        self.mode = 0
-                    elif spi_mode == 1:
-                        self.mode = 2
-                    elif spi_mode == 2:
-                        self.mode = 1
-                    elif spi_mode == 3:
-                        self.mode = 3
+                    self.mode = spi_mode
+
+                    # The USB-ISS SPI modes don't match up with official SPI
+                    # mode
+                    elif self.mode == 1:
+                        spi_mode = 2
+                    elif self.mode == 2:
+                        spi_mode = 1
                     # Add signal for SPI switch
                     spi_mode = 0x90 + spi_mode
                 else:
