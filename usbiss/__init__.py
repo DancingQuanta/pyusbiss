@@ -35,6 +35,11 @@ class USBISS(object):
     cur_iss_mode = None
     serial = None
 
+    ISS_CMD = 0X5A
+    ISS_VERSION = 0x01
+    ISS_MODE = 0x02
+    ISS_SER_NUM = 0x03
+
 
     def __init__(self, port):
 
@@ -64,6 +69,28 @@ class USBISS(object):
         self.serial.close()
 
 
+    def iss_write(self, data):
+        """
+        Write to USB-ISS
+        """
+        self.serial.write(bytearray(data))
+
+
+    def iss_read(self, size):
+        """
+        Read from USB-ISS
+        """
+        return self.serial.read(size)
+
+
+    def decode(self, data):
+        decoded = []
+        for i in range(0, len(data)):
+            unpacked = struct.unpack('B', data[i + 1: i + 2])[0]
+            decoded = decoded + [unpacked]
+        return decoded
+
+
     def get_iss_info(self):
         """ Get information about the USB-ISS
         Querying will return three bytes;
@@ -71,9 +98,10 @@ class USBISS(object):
             - firmware version (currently 2),
             - the current operating mode.
         """
-        self.serial.write(bytearray([0x5A, 0x01]))
-        response = struct.unpack('BBB', self.serial.read(3))
+        self.iss_write([self.ISS_CMD, self.ISS_VERSION])
+        response = self.iss_read(3)
         if len(response) == 3:
+            response = self.decode(response)
             self.module = response[0]
             self.firmware = hex(response[1])
             self.cur_iss_mode = hex(response[2])
@@ -84,16 +112,17 @@ class USBISS(object):
     def get_iss_serial_no(self):
         """ Get serial number of USB-ISS module
         """
-        self.serial.write(bytearray([0x5A, 0x03]))
+        self.iss_write([self.ISS_CMD, self.ISS_SER_NUM])
         # Return 8 bytes serial number
-        self.iss_sn = self.serial.read(8)
+        self.iss_sn = self.iss_read(8)
 
 
     def set_iss_mode(self, set_bytes):
         """Set the operating protocol of the USB-ISS
         """
-        self.serial.write(bytearray([0x5A, 0x02] + set_bytes))
-        response = self.serial.read(2)
+        data = [self.ISS_CMD, self.ISS_MODE] + set_bytes
+        self.iss_write(data)
+        response = self.iss_read(2)
         if response[0] == 0:
             if response[1] == 0x05:
                 raise RuntimeError('USB-ISS: Unknown Command')
