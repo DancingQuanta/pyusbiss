@@ -86,7 +86,7 @@ class USBISS(object):
     def decode(self, data):
         decoded = []
         for i in range(0, len(data)):
-            unpacked = struct.unpack('B', data[i + 1: i + 2])[0]
+            unpacked = struct.unpack('B', data[i: i + 1])[0]
             decoded = decoded + [unpacked]
         return decoded
 
