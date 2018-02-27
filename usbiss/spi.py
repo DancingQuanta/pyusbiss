@@ -75,14 +75,18 @@ class SPI(USBISS):
         self.sck_divisor = self.iss_spi_divisor(val)
 
     def xfer(self, data):
-        """Spidev function for transferring bytes to port
+        """
+        Perform SPI transaction.
+
+        The first received byte is either ACK or NACK.
+
         TODO: enforce rule that up to 63 bytes of data can be sent.
         TODO: enforce rule that there is no gaps in data bytes (what define a gap?)
         """
         self.iss_write([self.SPI_CMD] + data)
         response = self.iss_read(1 + len(data))
         if len(response) != 0:
-            status = response[0]
+            status = response.pop(0)
             if status == 0:
                 raise RuntimeError('USB-ISS: Transmission Error')
 
