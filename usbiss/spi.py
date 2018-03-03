@@ -86,11 +86,12 @@ class SPI(USBISS):
         self.iss_write([self.SPI_CMD] + data)
         response = self.iss_read(1 + len(data))
         if len(response) != 0:
+            response = self.decode(response)
             status = response.pop(0)
             if status == 0:
                 raise RuntimeError('USB-ISS: Transmission Error')
+            return response
 
-            return self.decode(response)
         else:
             raise RuntimeError('USB-ISS: Transmission Error: No bytes received!')
 
