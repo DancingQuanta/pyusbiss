@@ -20,10 +20,10 @@ class SPI(USBISS):
         super(SPI, self).__init__(port)
 
         # Select the SPI mode of USB-ISS's SPI operating mode
-        self.mode(mode)
+        self.mode = mode
 
         # Select frequency of USB-ISS's SPI operating mode
-        self.max_speed_hz(max_speed_hz)
+        self.max_speed_hz = max_speed_hz
 
         # Configure USB-ISS
         self.set_iss_mode([self.iss_mode, self.sck_divisor])
