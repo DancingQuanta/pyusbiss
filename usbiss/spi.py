@@ -7,7 +7,7 @@
 from .usbiss import USBISS
 
 
-class SPI(USBISS):
+class SPI(object):
     """SPI operating mode of USBISS
     """
 
@@ -17,13 +17,9 @@ class SPI(USBISS):
 
 
     def __init__(self, port, mode=0, max_speed_hz=3000000):
+        self._usbiss = USBISS(port)
 
-        self._mode = mode
-        self._max_speed_hz = max_speed_hz
         self.sck_divisor = 1
-
-        # Execute baseclass __init__
-        super(SPI, self).__init__(port)
 
         # Select the SPI mode of USB-ISS's SPI operating mode
         self.mode = mode
@@ -31,8 +27,26 @@ class SPI(USBISS):
         # Select frequency of USB-ISS's SPI operating mode
         self.max_speed_hz = max_speed_hz
 
+
+    def open(self):
+        self._usbiss.open()
+
+
+    def close(self):
+        self._usbiss.close()
+
+
+    def configure(self):
+        """
+        Configure SPI controller
+        """
+
+        # Add signal for SPI switch
+        iss_mode = self.SPI_MODE + self._mode
+
         # Configure USB-ISS
-        self.set_iss_mode([self.iss_mode, self.sck_divisor])
+        self._usbiss.set_iss_mode([iss_mode, self.sck_divisor])
+
 
     @property
     def mode(self):
@@ -57,14 +71,13 @@ class SPI(USBISS):
         try:
             lookup_table = [0, 2, 1, 3]
             self._mode = lookup_table[val]
+            self.configure()
         except:
             error = "The value of SPI mode, {}, is not between 0 and 3".format(
                 val
             )
             raise ValueError(error)
 
-        # Add signal for SPI switch
-        self.iss_mode = self.SPI_MODE + self._mode
 
     @property
     def max_speed_hz(self):
@@ -79,27 +92,8 @@ class SPI(USBISS):
     def max_speed_hz(self, val):
         self._max_speed_hz = val
         self.sck_divisor = self.iss_spi_divisor(val)
+        self.configure()
 
-    def xfer(self, data):
-        """
-        Perform SPI transaction.
-
-        The first received byte is either ACK or NACK.
-
-        TODO: enforce rule that up to 63 bytes of data can be sent.
-        TODO: enforce rule that there is no gaps in data bytes (what define a gap?)
-        """
-        self.write_data([self.SPI_CMD] + data)
-        response = self.read_data(1 + len(data))
-        if len(response) != 0:
-            response = self.decode(response)
-            status = response.pop(0)
-            if status == 0:
-                raise RuntimeError('USB-ISS: Transmission Error')
-            return response
-
-        else:
-            raise RuntimeError('USB-ISS: Transmission Error: No bytes received!')
 
     def iss_spi_divisor(self, sck):
         """Calculate a divisor from input SPI clock speed
@@ -114,3 +108,48 @@ class SPI(USBISS):
             error = "The value of sck_divisor, %s, is not between 0 and 255" % (divisor)
             raise ValueError(error)
         return divisor
+
+
+    def exchange(self, data):
+        """
+        Perform SPI transaction.
+
+        The first received byte is either ACK or NACK.
+
+        TODO: enforce rule that up to 63 bytes of data can be sent.
+        TODO: enforce rule that there is no gaps in data bytes (what define a gap?)
+        """
+        self._usbiss.write_data([self.SPI_CMD] + data)
+        response = self._usbiss.read_data(1 + len(data))
+        if len(response) != 0:
+            response = self._usbiss.decode(response)
+            status = response.pop(0)
+            if status == 0:
+                raise RuntimeError('USB-ISS: Transmission Error')
+            return response
+
+        else:
+            raise RuntimeError('USB-ISS: Transmission Error: No bytes received!')
+
+
+    def xfer(self, data):
+        return self.exchange(data)
+
+
+    def xfer2(self, data):
+        return self.exchange(data)
+
+
+    def readbytes(self, len):
+        """
+        Read len bytes from SPI device.
+        """
+        dummybytes = [0] * len
+        return self.exchange(dummybytes)
+
+
+    def writebytes(self, data):
+        """
+        Write bytes to SPI device.
+        """
+        self.exchange(data)
