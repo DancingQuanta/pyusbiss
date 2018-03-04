@@ -1,5 +1,11 @@
+# spi.py, part of pyusbiss
+# Copyright (c) 2016, 2018 Andrew Tolmie <andytheseeker@gmail.com>
+# Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-from . import USBISS
+"""SPI support for USB-ISS"""
+
+from .usbiss import USBISS
+
 
 class SPI(USBISS):
     """SPI operating mode of USBISS
