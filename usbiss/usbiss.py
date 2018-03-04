@@ -68,14 +68,14 @@ class USBISS(object):
         self.serial.close()
 
 
-    def iss_write(self, data):
+    def write_data(self, data):
         """
         Write to USB-ISS
         """
         self.serial.write(bytearray(data))
 
 
-    def iss_read(self, size):
+    def read_data(self, size):
         """
         Read from USB-ISS
         """
@@ -97,8 +97,8 @@ class USBISS(object):
             - firmware version (currently 2),
             - the current operating mode.
         """
-        self.iss_write([self.ISS_CMD, self.ISS_VERSION])
-        response = self.iss_read(3)
+        self.write_data([self.ISS_CMD, self.ISS_VERSION])
+        response = self.read_data(3)
         if len(response) == 3:
             response = self.decode(response)
             self.module = response[0]
@@ -111,17 +111,17 @@ class USBISS(object):
     def get_iss_serial_no(self):
         """ Get serial number of USB-ISS module
         """
-        self.iss_write([self.ISS_CMD, self.ISS_SER_NUM])
+        self.write_data([self.ISS_CMD, self.ISS_SER_NUM])
         # Return 8 bytes serial number
-        self.iss_sn = self.iss_read(8)
+        self.iss_sn = self.read_data(8)
 
 
     def set_iss_mode(self, set_bytes):
         """Set the operating protocol of the USB-ISS
         """
         data = [self.ISS_CMD, self.ISS_MODE] + set_bytes
-        self.iss_write(data)
-        response = self.iss_read(2)
+        self.write_data(data)
+        response = self.read_data(2)
         if response[0] == 0:
             if response[1] == 0x05:
                 raise RuntimeError('USB-ISS: Unknown Command')

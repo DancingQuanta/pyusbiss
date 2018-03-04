@@ -89,8 +89,8 @@ class SPI(USBISS):
         TODO: enforce rule that up to 63 bytes of data can be sent.
         TODO: enforce rule that there is no gaps in data bytes (what define a gap?)
         """
-        self.iss_write([self.SPI_CMD] + data)
-        response = self.iss_read(1 + len(data))
+        self.write_data([self.SPI_CMD] + data)
+        response = self.read_data(1 + len(data))
         if len(response) != 0:
             response = self.decode(response)
             status = response.pop(0)
