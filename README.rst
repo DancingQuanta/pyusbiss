@@ -58,14 +58,20 @@ Usage
 
 * SPI mode
 
-Initiate with SPI mode and open a port
+Initiate USB-ISS with SPI mode and open a port
 
-  usb = usbiss.USBISS(port, 'spi', spi_mode=2, freq=500000)
+  from usbiss.spi import SPI
 
-  usb.open()
+  spi = SPI(port)
 
-  print(usb.get_iss_info())
+  spi.mode = 1
+  spi.max_speed_hz = 500000
 
+  print(repr(spi._usbiss))
+
+SPI transaction
+
+  response = spi.xfer([0x00, 0x00])
 
 * I2C mode
 
