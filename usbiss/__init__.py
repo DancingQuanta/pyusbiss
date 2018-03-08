@@ -52,7 +52,7 @@ class USBISS(object):
 
                     # The USB-ISS SPI modes don't match up with official SPI
                     # mode
-                    elif self.mode == 1:
+                    if self.mode == 1:
                         spi_mode = 2
                     elif self.mode == 2:
                         spi_mode = 1
