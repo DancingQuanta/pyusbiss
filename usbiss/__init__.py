@@ -12,7 +12,7 @@ import struct
 
 __author__ = 'Andrew Tolmie'
 __email__ = 'andytheseeker@gmail.com'
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 def iss_spi_divisor(sck):
     divisor = (6000000 / sck) - 1
