@@ -6,3 +6,8 @@ History
 ------------------
 
 * Initialised project
+
+0.1.1 (2018-03-08)
+------------------
+
+* Functional USBISS control and SPI control.
