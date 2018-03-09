@@ -41,8 +41,11 @@ class SPI(object):
         Configure SPI controller
         """
 
+        # Convert official SPI sheme to USBISS scheme
+        lookup_table = [0, 2, 1, 3]
+        mode = lookup_table[self._mode]
         # Add signal for SPI switch
-        iss_mode = self.SPI_MODE + self._mode
+        iss_mode = self.SPI_MODE + mode
 
         # Configure USB-ISS
         self._usbiss.set_iss_mode([iss_mode, self.sck_divisor])
@@ -68,11 +71,10 @@ class SPI(object):
 
     @mode.setter
     def mode(self, val):
-        try:
-            lookup_table = [0, 2, 1, 3]
-            self._mode = lookup_table[val]
+        if 0 <= val < 4:
+            self._mode = val
             self.configure()
-        except:
+        else:
             error = "The value of SPI mode, {}, is not between 0 and 3".format(
                 val
             )
