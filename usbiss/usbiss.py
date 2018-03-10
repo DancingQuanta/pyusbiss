@@ -45,7 +45,6 @@ class USBISS(object):
     SPI_MODE = 0x90
     SPI_CMD = 0x61
 
-
     def __init__(self, port):
 
         # Open serial port
@@ -61,18 +60,15 @@ class USBISS(object):
         self.get_iss_info()
         self.get_iss_serial_no()
 
-
     def open(self):
         """Open Serial port to USB-ISS
         """
         self.serial.open()
 
-
     def close(self):
         """Close Serial port to USB-ISS
         """
         self.serial.close()
-
 
     def write_data(self, data):
         """
@@ -80,13 +76,11 @@ class USBISS(object):
         """
         self.serial.write(bytearray(data))
 
-
     def read_data(self, size):
         """
         Read from USB-ISS
         """
         return self.serial.read(size)
-
 
     def decode(self, data):
         decoded = []
@@ -94,7 +88,6 @@ class USBISS(object):
             unpacked = struct.unpack('B', data[i: i + 1])[0]
             decoded = decoded + [unpacked]
         return decoded
-
 
     def get_iss_info(self):
         """ Get information about the USB-ISS
@@ -113,14 +106,12 @@ class USBISS(object):
         else:
             raise RuntimeError("Could not get version details")
 
-
     def get_iss_serial_no(self):
         """ Get serial number of USB-ISS module
         """
         self.write_data([self.ISS_CMD, self.ISS_SER_NUM])
         # Return 8 bytes serial number
         self.iss_sn = self.read_data(8)
-
 
     def set_mode(self, set_bytes):
         """Set the operating protocol of the USB-ISS
@@ -137,7 +128,6 @@ class USBISS(object):
                 raise RuntimeError('USB-ISS: Internal Error 2')
             else:
                 raise RuntimeError('USB-ISS: Undocumented Error')
-
 
     def __repr__(self):
         return ("The module ID is {}\n"

@@ -11,7 +11,6 @@ class SPI(object):
     """SPI operating mode of USBISS
     """
 
-
     def __init__(self, port, mode=0, max_speed_hz=3000000):
         self._usbiss = USBISS(port)
 
@@ -23,14 +22,11 @@ class SPI(object):
         # Select frequency of USB-ISS's SPI operating mode
         self.max_speed_hz = max_speed_hz
 
-
     def open(self):
         self._usbiss.open()
 
-
     def close(self):
         self._usbiss.close()
-
 
     def configure(self):
         """
@@ -45,7 +41,6 @@ class SPI(object):
 
         # Configure USB-ISS
         self._usbiss.set_mode([iss_mode, self.sck_divisor])
-
 
     @property
     def mode(self):
@@ -76,7 +71,6 @@ class SPI(object):
             )
             raise ValueError(error)
 
-
     @property
     def max_speed_hz(self):
         """
@@ -92,7 +86,6 @@ class SPI(object):
         self.sck_divisor = self.iss_spi_divisor(val)
         self.configure()
 
-
     def iss_spi_divisor(self, sck):
         """Calculate a divisor from input SPI clock speed
         """
@@ -100,13 +93,14 @@ class SPI(object):
         divisor = int(_divisor)
 
         if divisor != _divisor:
-            raise ValueError('Non-integral SCK divisor.')
+            raise ValueError('Non-integer SCK divisor.')
 
         if not 1 <= divisor < 256:
-            error = "The value of sck_divisor, %s, is not between 0 and 255" % (divisor)
+            error = ("The value of sck_divisor, {},"
+                     "is not between 0 and 255".format(divisor)
+                     )
             raise ValueError(error)
         return divisor
-
 
     def exchange(self, data):
         """
@@ -129,14 +123,11 @@ class SPI(object):
         else:
             raise RuntimeError('USB-ISS: Transmission Error: No bytes received!')
 
-
     def xfer(self, data):
         return self.exchange(data)
 
-
     def xfer2(self, data):
         return self.exchange(data)
-
 
     def readbytes(self, len):
         """
@@ -144,7 +135,6 @@ class SPI(object):
         """
         dummybytes = [0] * len
         return self.exchange(dummybytes)
-
 
     def writebytes(self, data):
         """
