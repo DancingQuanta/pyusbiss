@@ -58,6 +58,8 @@ Installation
 
 Install from setup.py
 
+::
+
   python setup.py install
 
 Usage
@@ -66,6 +68,8 @@ Usage
 * SPI mode
 
 Initiate USB-ISS with SPI mode and open a port
+
+::
 
   from usbiss.spi import SPI
 
@@ -76,7 +80,7 @@ Initiate USB-ISS with SPI mode and open a port
 
   print(repr(spi._usbiss))
 
-SPI transaction
+  # SPI transaction
 
   response = spi.xfer([0x00, 0x00])
 
