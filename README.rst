@@ -26,11 +26,13 @@ Planned features
 ****************
 
 * Configure USB-ISS to different operating modes; I2C, SPI, I/O and serial
+
   * For each mode, the API will mimic the popular APIs such as `py-spidev`_ for
     SPI by having same method and properties names. These names will be used in
     duck typing.
     This will ensure miminal adaption of applications wishing to use USB-ISS
     for prototyping and testing.
+
 * Query status of USB-ISS
 * Send bytes to and read from components via USB-ISS
 
@@ -38,12 +40,17 @@ Current implementation
 **********************
 
 * The SPI mode is implemented with following methods and properties
+
   * Methods
+
     * ``xfer`` - send N bytes and read N bytes back.
+
   * Properties
+
     * ``mode`` - SPI modes. Please note that USB-ISS's SPI modes don't match up
       with official SPI modes. Use official SPI mode numbers and the API will
       configure the USB-ISS correctly.
+
 * Other modes are not implemented.
 
 Installation
