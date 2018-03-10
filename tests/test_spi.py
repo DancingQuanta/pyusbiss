@@ -15,7 +15,6 @@ This script can be ran with a port identifier as an argument.
 """
 
 import unittest
-import time
 import sys
 from usbiss import spi
 
@@ -36,14 +35,11 @@ def segments(data, size=16):
 class SpiTestCase(unittest.TestCase):
     """SPI driver test case"""
 
-
     def setUp(self):
         self.cxn = spi.SPI(PORT)
 
-
     def tearDown(self):
         self.cxn.close()
-
 
     def test0_modes(self):
         """
@@ -56,7 +52,6 @@ class SpiTestCase(unittest.TestCase):
             self.cxn._usbiss.get_iss_info()
             usbiss_mode = int(self.cxn._usbiss.cur_mode, 0) - self.cxn._usbiss.SPI_MODE
             self.assertEqual(usbiss_mode, lookup_table[i], "expected a {} which was written before".format(lookup_table[i]))
-
 
     def test1_loopback(self):
         """
