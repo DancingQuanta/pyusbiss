@@ -45,6 +45,19 @@ class SpiTestCase(unittest.TestCase):
         self.cxn.close()
 
 
+    def test0_modes(self):
+        """
+        Test SPI modes
+        """
+        for i in range(3):
+            self.cxn.mode = i
+            self.assertEqual(self.cxn.mode, i, "expected a {} which was written before".format(i))
+            lookup_table = [0, 2, 1, 3]
+            self.cxn._usbiss.get_iss_info()
+            usbiss_mode = int(self.cxn._usbiss.cur_mode, 0) - self.cxn._usbiss.SPI_MODE
+            self.assertEqual(usbiss_mode, lookup_table[i], "expected a {} which was written before".format(lookup_table[i]))
+
+
     def test1_loopback(self):
         """
         Loopback test
