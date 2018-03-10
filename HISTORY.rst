@@ -18,3 +18,12 @@ History
 
 * Changed SPI mode scheme to official SPI scheme rather than USB-ISS scheme.
 * Clarifies project mission in README.rst
+
+0.2.0 (2018-03-10)
+------------------
+
+* Refactored the codebase so that each protocol can be controlled by its own
+  class. This means a breaking change in the interface.
+* SPI and USBISS support only in this release with updated usage.
+* Added SPI tests.
+* Updated README.rst with new interface.
