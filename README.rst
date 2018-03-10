@@ -56,18 +56,30 @@ Current implementation
 Installation
 ------------
 
-Install from setup.py
-
 ::
 
-  python setup.py install
+  pip install pyusbiss
 
 Usage
 -----
 
+* USBISS only
+
+Connect to your USB-ISS and get information about your USB-ISS.
+
+::
+
+  from usbiss.usbiss import USBISS
+
+  port = 'COM4' # Windows
+  port = '/dev/ttyACM0' # Linux
+
+  cxn = USBISS(port)
+  print(repr(cxn)))
+
 * SPI mode
 
-Initiate USB-ISS with SPI mode and open a port
+Initiate USB-ISS with SPI mode and open a port.
 
 ::
 
@@ -111,9 +123,11 @@ Credits
 
 The project was developed during a NERC's placement at University of Leeds.
 
-This package was created with Cookiecutter_ and the `audreyr/cookiecutter-pypackage`_ project template.
+This package was created with Cookiecutter_ and the
+`audreyr/cookiecutter-pypackage`_ project template.
 
-Inspired by `Waggle's alphasense.py`_, where most of USB-ISS functions was copied over.
+Inspired by `Waggle's alphasense.py`_, where most of USB-ISS functions were
+copied over.
 
 .. _`USB-ISS's webpage`: https://www.robot-electronics.co.uk/htm/usb_iss_tech.htm
 .. _pyserial: https://pypi.python.org/pypi/pyserial
@@ -122,4 +136,3 @@ Inspired by `Waggle's alphasense.py`_, where most of USB-ISS functions was copie
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
 .. _`Waggle's alphasense.py`: https://github.com/waggle-sensor/waggle
-
