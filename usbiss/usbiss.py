@@ -28,16 +28,22 @@ class USBISS(object):
     library used to facilitate an connection.
     """
 
+    # USBISS identification and configuration
     module = None
     firmware = None
-    iss_mode = None
-    cur_iss_mode = None
+    mode = None
+    cur_mode = None
     serial = None
 
+    # USBISS command bytes
     ISS_CMD = 0X5A
     ISS_VERSION = 0x01
-    ISS_MODE = 0x02
+    ISS_SET_MODE = 0x02
     ISS_SER_NUM = 0x03
+
+    # SPI command bytes
+    SPI_MODE = 0x90
+    SPI_CMD = 0x61
 
 
     def __init__(self, port):
@@ -103,7 +109,7 @@ class USBISS(object):
             response = self.decode(response)
             self.module = response[0]
             self.firmware = hex(response[1])
-            self.cur_iss_mode = hex(response[2])
+            self.cur_mode = hex(response[2])
         else:
             raise RuntimeError("Could not get version details")
 
@@ -116,10 +122,10 @@ class USBISS(object):
         self.iss_sn = self.read_data(8)
 
 
-    def set_iss_mode(self, set_bytes):
+    def set_mode(self, set_bytes):
         """Set the operating protocol of the USB-ISS
         """
-        data = [self.ISS_CMD, self.ISS_MODE] + set_bytes
+        data = [self.ISS_CMD, self.ISS_SET_MODE] + set_bytes
         self.write_data(data)
         response = self.read_data(2)
         if response[0] == 0:
@@ -138,5 +144,5 @@ class USBISS(object):
                 "The firmware version is {}\n"
                 "The current operating mode is {}\n"
                 "The serial number is {}").format(
-                    self.module, self.firmware, self.cur_iss_mode, self.iss_sn
+                    self.module, self.firmware, self.cur_mode, self.iss_sn
                 )

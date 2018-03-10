@@ -12,10 +12,6 @@ class SPI(object):
     """
 
 
-    SPI_MODE = 0x90
-    SPI_CMD = 0x61
-
-
     def __init__(self, port, mode=0, max_speed_hz=3000000):
         self._usbiss = USBISS(port)
 
@@ -45,10 +41,10 @@ class SPI(object):
         lookup_table = [0, 2, 1, 3]
         mode = lookup_table[self._mode]
         # Add signal for SPI switch
-        iss_mode = self.SPI_MODE + mode
+        iss_mode = self._usbiss.SPI_MODE + mode
 
         # Configure USB-ISS
-        self._usbiss.set_iss_mode([iss_mode, self.sck_divisor])
+        self._usbiss.set_mode([iss_mode, self.sck_divisor])
 
 
     @property
@@ -121,7 +117,7 @@ class SPI(object):
         TODO: enforce rule that up to 63 bytes of data can be sent.
         TODO: enforce rule that there is no gaps in data bytes (what define a gap?)
         """
-        self._usbiss.write_data([self.SPI_CMD] + data)
+        self._usbiss.write_data([self._usbiss.SPI_CMD] + data)
         response = self._usbiss.read_data(1 + len(data))
         if len(response) != 0:
             response = self._usbiss.decode(response)
