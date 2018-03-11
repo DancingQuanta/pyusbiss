@@ -40,7 +40,7 @@ class SPI(object):
         iss_mode = self._usbiss.SPI_MODE + mode
 
         # Configure USB-ISS
-        self._usbiss.set_mode([iss_mode, self.sck_divisor])
+        self._usbiss.mode = [iss_mode, self.sck_divisor]
 
     @property
     def mode(self):

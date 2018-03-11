@@ -31,8 +31,7 @@ class USBISS(object):
     # USBISS identification and configuration
     module = None
     firmware = None
-    mode = None
-    cur_mode = None
+    _mode = None
     serial = None
 
     # USBISS command bytes
@@ -101,8 +100,8 @@ class USBISS(object):
         if len(response) == 3:
             response = self.decode(response)
             self.module = response[0]
-            self.firmware = hex(response[1])
-            self.cur_mode = hex(response[2])
+            self.firmware = response[1]
+            self._mode = response[2]
         else:
             raise RuntimeError("Could not get version details")
 
@@ -113,9 +112,24 @@ class USBISS(object):
         # Return 8 bytes serial number
         self.iss_sn = self.read_data(8)
 
-    def set_mode(self, set_bytes):
-        """Set the operating protocol of the USB-ISS
+    @property
+    def mode(self):
         """
+        The configuration byte of USB-ISS that controls the operating protocol
+        and its additional parameters.
+
+        :getter: A configuration byte
+        :setter: The configuration byte
+        :type: int (0xnn)
+        """
+        return self._mode
+
+    @mode.setter
+    def mode(self, set_bytes):
+        """Set the operating protocol of the USB-ISS with additional
+        parameters for the  protocol
+        """
+        self._mode = set_bytes
         data = [self.ISS_CMD, self.ISS_SET_MODE] + set_bytes
         self.write_data(data)
         response = self.read_data(2)
@@ -134,5 +148,5 @@ class USBISS(object):
                 "The firmware version is {}\n"
                 "The current operating mode is {}\n"
                 "The serial number is {}").format(
-                    self.module, self.firmware, self.cur_mode, self.iss_sn
+                    self.module, self.firmware, self._mode, self.iss_sn
                 )
