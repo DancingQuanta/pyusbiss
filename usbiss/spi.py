@@ -66,8 +66,8 @@ class SPI(object):
             self._mode = val
             self.configure()
         else:
-            error = "The value of SPI mode, {}, is not between 0 and 3".format(
-                val
+            error = (
+                "The value of SPI mode, {}, is not between 0 and 3".format(val)
             )
             raise ValueError(error)
 
@@ -96,9 +96,10 @@ class SPI(object):
             raise ValueError('Non-integer SCK divisor.')
 
         if not 1 <= divisor < 256:
-            error = ("The value of sck_divisor, {},"
-                     "is not between 0 and 255".format(divisor)
-                     )
+            error = (
+                "The value of sck_divisor, {}, "
+                "is not between 0 and 255".format(divisor)
+            )
             raise ValueError(error)
         return divisor
 
@@ -129,11 +130,11 @@ class SPI(object):
     def xfer2(self, data):
         return self.exchange(data)
 
-    def readbytes(self, len):
+    def readbytes(self, readLen):
         """
-        Read len bytes from SPI device.
+        Read readLen bytes from SPI device.
         """
-        dummybytes = [0] * len
+        dummybytes = [0] * readLen
         return self.exchange(dummybytes)
 
     def writebytes(self, data):
