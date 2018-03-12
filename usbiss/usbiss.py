@@ -14,6 +14,10 @@ import struct
 import serial
 
 
+class USBISSError(IOError):
+    """Base class error for all USB-ISS devices"""
+
+
 class USBISS(object):
     """Base class for USB-ISS.
     The main purpose of the base class is to manage serial connection between
@@ -103,7 +107,7 @@ class USBISS(object):
             self.firmware = response[1]
             self._mode = response[2]
         else:
-            raise RuntimeError("Could not get version details")
+            raise USBISSError("Could not get version details")
 
     def get_iss_serial_no(self):
         """ Get serial number of USB-ISS module
@@ -134,14 +138,15 @@ class USBISS(object):
         self.write_data(data)
         response = self.read_data(2)
         if response[0] == 0:
-            if response[1] == 0x05:
-                raise RuntimeError('USB-ISS: Unknown Command')
-            elif response[1] == 0x06:
-                raise RuntimeError('USB-ISS: Internal Error 1')
-            elif response[1] == 0x07:
-                raise RuntimeError('USB-ISS: Internal Error 2')
-            else:
-                raise RuntimeError('USB-ISS: Undocumented Error')
+            error_dict = {
+                0x05: 'Unknown Command',
+                0x06: 'Internal Error 1',
+                0x07: 'Internal Error 2'
+            }
+            try:
+                raise USBISSError(error_dict[response(1)])
+            except KeyError:
+                raise USBISSError('Undocumented Error')
 
     def __repr__(self):
         return ("The module ID is {}\n"
