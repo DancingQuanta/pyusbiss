@@ -5,7 +5,8 @@ usbiss=GPIO('COM3')
 print(t._usbiss.__repr__)
 
 usbiss.setup(1, GPIO.OUT)
-usbiss.setup(3, GPIO.IN) # Make pin 4 a digital input.
+usbiss.setup(3, GPIO.IN) # Make pin 3 a digital input.
+
 print('Press Ctrl-C to quit.')
 while True:
     # Set pin C0 to a high level so the LED turns on.
@@ -22,3 +23,4 @@ while True:
         print('Pin D4 is LOW!')
     else:
         print('Pin D4 is HIGH!')
+    
