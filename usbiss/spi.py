@@ -5,6 +5,7 @@
 """SPI support for USB-ISS"""
 
 from .usbiss import USBISS
+from .usbiss import USBISSError
 
 
 class SPI(object):
@@ -30,12 +31,13 @@ class SPI(object):
 
     def configure(self):
         """
-        Configure SPI controller
+        Configure SPI controller with the SPI mode and operating frequency
         """
 
-        # Convert official SPI sheme to USBISS scheme
+        # Convert standard SPI sheme to USBISS scheme
         lookup_table = [0, 2, 1, 3]
         mode = lookup_table[self._mode]
+
         # Add signal for SPI switch
         iss_mode = self._usbiss.SPI_MODE + mode
 
@@ -48,15 +50,14 @@ class SPI(object):
         Property that gets / sets the SPI mode as two bit pattern of Clock
         Polarity and Phase [CPOL|CPHA].
 
-        Emulates spidev.SpiDev.mode with USBISS.SPI.mode.
+        Standard SPI mode scheme ia used. USBISS SPI mode scheme have 1 and 2
+        swapped compared with standard scheme.
 
-        Users must use standard SPI mode numbers.
-        USBISS.SPI.mode uses standard SPI mode numbers which do not match up
-        with USBISS number commands.
-        A lookup table will select the correct USBISS number command based on
-        chosen SPI mode.
-        Serves as a check on the value of the SPI mode which should be between
-        0 and 3.
+        Emulates spidev.SpiDev.mode
+
+        :getter: Gets SPI mode
+        :setter: Sets SPI mode
+        :type: int (byte 0xnn)
         """
         return self._mode
 
@@ -76,7 +77,12 @@ class SPI(object):
         """
         Property that gets / sets the maximum bus speed in Hz.
 
-        Emulates spidev.SpiDev.max_speed_hz with USBISS.SPI.max_speed_hz.
+        Emulates spidev.SpiDev.max_speed_hz.
+
+        :getter: Gets the SPI operating frequency
+        :setter: Sets the SPI operating frequency
+        :type: int
+
         """
         return self._max_speed_hz
 
@@ -87,7 +93,13 @@ class SPI(object):
         self.configure()
 
     def iss_spi_divisor(self, sck):
-        """Calculate a divisor from input SPI clock speed
+        """
+        Calculate a USBISS SPI divisor value from the input SPI clock speed
+
+        :param sck: SPI clock frequency
+        :type sck: int
+        :returns: ISS SCK divisor
+        :rtype: int
         """
         _divisor = (6000000 / sck) - 1
         divisor = int(_divisor)
@@ -109,8 +121,12 @@ class SPI(object):
 
         The first received byte is either ACK or NACK.
 
-        TODO: enforce rule that up to 63 bytes of data can be sent.
-        TODO: enforce rule that there is no gaps in data bytes (what define a gap?)
+        :TODO: enforce rule that up to 63 bytes of data can be sent.
+        :TODO: enforce rule that there is no gaps in data bytes (what define a gap?)
+
+        :param data: List of bytes
+        :returns: List of bytes
+        :rtype: List of bytes
         """
         self._usbiss.write_data([self._usbiss.SPI_CMD] + data)
         response = self._usbiss.read_data(1 + len(data))
@@ -118,27 +134,45 @@ class SPI(object):
             response = self._usbiss.decode(response)
             status = response.pop(0)
             if status == 0:
-                raise RuntimeError('USB-ISS: Transmission Error')
+                raise USBISSError('SPI Transmission Error')
             return response
-
         else:
-            raise RuntimeError('USB-ISS: Transmission Error: No bytes received!')
+            raise USBISSError('SPI Transmission Error: No bytes received!')
 
     def xfer(self, data):
+        """
+        Perform a SPI transection
+
+        :param data: List of bytes
+        :returns: List of bytes
+        :rtype: List of bytes
+        """
         return self.exchange(data)
 
     def xfer2(self, data):
+        """
+        Write bytes to SPI device.
+
+        :param data: List of bytes
+        :returns: List of bytes
+        :rtype: List of bytes
+        """
         return self.exchange(data)
 
     def readbytes(self, readLen):
         """
         Read readLen bytes from SPI device.
+
+        :param readLen: Number of bytes
+        :returns: List of bytes
+        :rtype: List of bytes
         """
-        dummybytes = [0] * readLen
-        return self.exchange(dummybytes)
+        return self.exchange([0] * readLen)
 
     def writebytes(self, data):
         """
         Write bytes to SPI device.
+
+        :param data: List of bytes
         """
         self.exchange(data)
