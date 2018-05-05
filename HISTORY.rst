@@ -31,7 +31,12 @@ History
 0.2.1 (2018-05-05)
 ------------------
 
-* Refactored USB-ISS driver using property decorator.
+* Refactored USB-ISS driver using property decorator
 * Updated SPI driver to use updated USBISS driver
 * Fully documented SPI driver
 * Some fixes
+
+0.2.2 (2018-05-05)
+------------------
+
+* Tidied up README.md
