@@ -27,3 +27,11 @@ History
 * SPI and USBISS support only in this release with updated usage.
 * Added SPI tests.
 * Updated README.rst with new interface.
+
+0.2.1 (2018-05-05)
+------------------
+
+* Refactored USB-ISS driver using property decorator.
+* Updated SPI driver to use updated USBISS driver
+* Fully documented SPI driver
+* Some fixes
