@@ -36,21 +36,10 @@ Planned features
 * Query status of USB-ISS
 * Send bytes to and read from components via USB-ISS
 
-Current implementation
-**********************
+Current features
 
-* The SPI mode is implemented with following methods and properties
-
-  * Methods
-
-    * ``xfer`` - send N bytes and read N bytes back.
-
-  * Properties
-
-    * ``mode`` - SPI modes. Please note that USB-ISS's SPI modes don't match up
-      with official SPI modes. Use official SPI mode numbers and the API will
-      configure the USB-ISS correctly.
-
+* Functional USBISS driver
+* Functional SPI driver
 * Other modes are not implemented.
 
 Installation
