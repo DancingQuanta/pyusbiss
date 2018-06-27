@@ -5,7 +5,7 @@
 """
 Python interface to USB-ISS Multifunction USB Communications Module.
 The technical specification can be found here:
-    https://www.robot-electronics.co.uk/htm/usb_iss_tech.htm
+https://www.robot-electronics.co.uk/htm/usb_iss_tech.htm
 
 Some of the code is derived from: https://github.com/waggle-sensor/waggle/
 """
@@ -93,11 +93,13 @@ class USBISS(object):
         return decoded
 
     def get_iss_info(self):
-        """ Get information about the USB-ISS
+        """
+        Get information about the USB-ISS
+
         Querying will return three bytes;
-            - the module ID (7),
-            - firmware version (currently 2),
-            - the current operating mode.
+        - the module ID (7),
+        - firmware version (currently 2),
+        - the current operating mode.
         """
         self.write_data([self.ISS_CMD, self.ISS_VERSION])
         response = self.read_data(3)
