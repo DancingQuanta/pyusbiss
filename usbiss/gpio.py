@@ -56,6 +56,10 @@ class GPIO(object):
         """
         Configure Pin
         """
+        if pin < 1 or pin > 4:
+            raise ValueError('Pin must be between 1 and 4')
+        if mode not in (GPIO.IN, GPIO.OUT, GPIO.ADC):
+            raise ValueError('Mode must be GPIO.IN, GPIO.OUT or GPIO.ADC')
         # print('setup - before', format(self.ControlRegister, '08b'))
         for i in range(0, 2):
             if mode & 1 << i:
@@ -78,11 +82,16 @@ class GPIO(object):
         dict of pin name to pin mode (IN or OUT).  Optional starting values of
         pins can be provided in the values dict (with pin name to pin value).
         """
-        pass
+        for pin, mode in pins.items():
+            self._setup_pin(pin, mode)
+        for pin, value in values.items():
+            self._output_pin(pin, value)
 
     def _output_pin(self, pin, level):
         """
         """
+        if pin <1 or pin >4:
+            raise ValueError('Pin must be between 1 and 4.')
         if level:
             self.DataRegister |= 1 << (pin-1)
         else:
@@ -96,34 +105,39 @@ class GPIO(object):
         response = self._usbiss.read_data(1)
         #TODO - Raise exception when respond != 0xFF
 
-    def output_pins(self):
+    def output_pins(self, pins):
         """Set multiple pins high or low at once.  Pins should be a dict of pin
         name to pin value (HIGH/True for 1, LOW/False for 0).  All provided pins
         will be set to the given values.
         """
-        pass
+        for pin, value in iter(pins.items()):
+            self._output_pin(pin, value)
+        self._usbiss.write_data([self.IO_SETPINS_CMD, self.DataRegister])
+        response = self._usbiss.read_data(1)
+        #TODO - Raise exception when respond != 0xFF or handle in _usbiss.write_data
 
     def input(self, pin):
         """
         """
         self._usbiss.write_data([self.IO_GETPINS_CMD])
         self.DataRegister = int.from_bytes(self._usbiss.read_data(1), byteorder='little')
-        print(type(self.DataRegister))
-        # print('input {}', format(self.DataRegister, '08b'))
-
+        # DEBUG print(type(self.DataRegister))
+        # DEBUG print('input {}', format(self.DataRegister, '08b'))
         return(self.DataRegister & (1 << (pin -1)) !=0)
 
     def input_pins(self, pin):
         """
         """
-        pass
+        self._usbiss.write_data([self.IO_GETPINS_CMD])
+        self.DataRegister = int.from_bytes(self._usbiss.read_data(1), byteorder='little')
+        
 
     def adc(self, pin, vcc):
         """
         """
         self._usbiss.write_data([self.IO_GETAD_CMD, pin])
         adcv = self._usbiss.read_data(2)
-        print('ADC 0 {} 1 {}'.format(adcv[0], adcv[1]))
+        # DEBUG print('ADC 0 {} 1 {}'.format(adcv[0], adcv[1]))
         return(vcc/(1024*(255*adcv[0]+adcv[1])))
 
     
