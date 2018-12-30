@@ -54,7 +54,8 @@ class GPIO(object):
 
     def _setup_pin(self, pin, mode):
         """
-        Configure Pin
+        Helper function to setup s GPIO pin.
+        Mode = IN, OUT, ADC for analog conversions
         """
         if pin < 1 or pin > 4:
             raise ValueError('Pin must be between 1 and 4')
@@ -69,8 +70,10 @@ class GPIO(object):
 
 
     def setup(self, pin, mode):
+
         """
-        Configure Pin
+        Set the input or output mode for a specified pin.  Mode should be
+        either OUT or IN or ADC.
         """
         # print('setup - before', format(self.ControlRegister, '08b'))
         self._setup_pin(pin, mode)
@@ -89,6 +92,7 @@ class GPIO(object):
 
     def _output_pin(self, pin, level):
         """
+        Helper function to set a pin to a high or low level
         """
         if pin <1 or pin >4:
             raise ValueError('Pin must be between 1 and 4.')
@@ -99,11 +103,16 @@ class GPIO(object):
 
     def output(self, pin, level):
         """
+        Set the specified pin the provided high/low value.  Value should be
+        either HIGH/LOW or a boolean (true = high).
         """
         self._output_pin(pin, level)
         self._usbiss.write_data([self.IO_SETPINS_CMD, self.DataRegister])
         response = self._usbiss.read_data(1)
-        #TODO - Raise exception when respond != 0xFF
+        if response != 0xFF:
+            raise RuntimeError('USB-ISS: GPIO output - Transmission Error')
+        return response
+
 
     def output_pins(self, pins):
         """Set multiple pins high or low at once.  Pins should be a dict of pin
@@ -118,6 +127,8 @@ class GPIO(object):
 
     def input(self, pin):
         """
+        Read the specified pin and return HIGH/true if the pin is pulled high,
+        or LOW/false if pulled low.
         """
         self._usbiss.write_data([self.IO_GETPINS_CMD])
         self.DataRegister = int.from_bytes(self._usbiss.read_data(1), byteorder='little')
@@ -125,15 +136,25 @@ class GPIO(object):
         # DEBUG print('input {}', format(self.DataRegister, '08b'))
         return(self.DataRegister & (1 << (pin -1)) !=0)
 
-    def input_pins(self, pin):
+    def input_pins(self, pins):
+
         """
+        Read multiple pins specified in the given list and return list of pin values
+        GPIO.HIGH/True if the pin is pulled high, or GPIO.LOW/False if pulled low.
         """
+        if [pin for pin in pins if pin <1 or pin > 4]:
+            raise ValueError('Pin must be between 1 and 4.')
         self._usbiss.write_data([self.IO_GETPINS_CMD])
         self.DataRegister = int.from_bytes(self._usbiss.read_data(1), byteorder='little')
+        # Adafruit - return [((_pins >> pin) & 0x0001) == 1 for pin in pins]
+        return [((self.DataRegister >> (pin-1))& 0x0001) for pin in pins]
+
         
 
     def adc(self, pin, vcc):
         """
+        Read the analog voltage on the pin. vcc is the provided voltage to
+        tot the USBISS and is used as reference 
         """
         self._usbiss.write_data([self.IO_GETAD_CMD, pin])
         adcv = self._usbiss.read_data(2)
