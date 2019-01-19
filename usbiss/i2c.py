@@ -21,7 +21,8 @@ class I2C(object):
     I2C_H_400KHZ    0x70
     I2C_H_1000KHZ   0x80
     """
-
+    I2C_S_50KHZ  = 0x30
+    I2C_S_100KHZ = 0x40 
     I2C_H_100KHZ = 0x60
     IO_TYPE = 0x04
     I2C_TEST = 0x58
@@ -61,17 +62,27 @@ class I2C(object):
         A single byte is returned, zero if no device is detected or non-zero if the device was detected.
          """
         response=[]
-        for devadr in range(126): # ToDo : Check range.
-            resp = self._usbiss.write_data([self.I2C_TEST, devadr])
-            if resp != 0:
+        for devadr in range(127): # ToDo : Check range.
+            self._usbiss.write_data([self.I2C_TEST, devadr])
+            resp = self._usbiss.read_data(1)
+            resp = self._usbiss.decode(resp)
+            if resp != [0]:
                 response.append(devadr)
         return response
         #ToDo : convert to : List Comprehension
         # ToDo : Check if we need to wait 500mS for a response and otherwise raise an error.
 
+    # GdH 5-1-2019 - is dit een goede oplossing ? ToDo !
+    def write_data(self, data):
+        self._usbiss.write_data(data)
+        
+    def read_data(self, size):
+        ret  = self._usbiss.read_data(size)
+        return ret
 
-
-
+    def decode(self,data):
+        dec = self._usbiss.decode(data)
+        return dec
 
 
 
