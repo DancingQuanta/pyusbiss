@@ -74,10 +74,19 @@ class I2CDevice(object):
 
     def write8(self, register, value):
         """Write an 8-bit value to the specified register."""
-        pass
+        self._usbissi2c.write_data([self.I2C_AD1, self._addr, register, 1 , value])
+        resp = self._usbissi2c.read_data(1)
+        resp = self._usbissi2c.decode(resp)
+        if resp == [0]:
+            raise RuntimeError("I2CDevice - write8 - TransmissionError")
 
     def write16(self, register, value):
         """Write a 16-bit value to the specified register."""
+        self._usbissi2c.write_data([self.I2C_AD1, self._addr, register, 2 , value])
+        resp = self._usbissi2c.read_data(1)
+        resp = self._usbissi2c.decode(resp)
+        if resp == [0]:
+            raise RuntimeError("I2CDevice - write8 - TransmissionError")
         pass
 
     def writeList(self, register, data):
