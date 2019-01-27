@@ -59,7 +59,7 @@ class I2CDevice(object):
         # time.sleep(0.1)
         resp = self._usbissi2c.read_data(1) # Reads 1 byte / 8 bits
         resp = self._usbissi2c.decode(resp)
-        return resp 
+        return resp[0]
     
     def writeRaw8(self, value):
         """

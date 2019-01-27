@@ -15,6 +15,7 @@ from usbiss_i2c_lcd_inheritance import I2cLcd
 # The PCF8574 has a jumper selectable address: 0x20 - 0x27
 DEFAULT_I2C_ADDR = 78
 
+
 def test_main():
     """Test function for verifying basic functionality."""
     print("Running test_main")
