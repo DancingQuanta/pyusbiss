@@ -12,20 +12,16 @@ from usbiss import USBISS
 
 
 class I2C(object):
-    """I2C operating mode of USBISS
-    I2C_S_20KHZ     0x20
-    I2C_S_50KHZ     0x30
-    I2C_S_100KHZ    0x40 
-    I2C_S_400KHZ    0x50 
-    I2C_H_100KHZ    0x60
-    I2C_H_400KHZ    0x70
-    I2C_H_1000KHZ   0x80
-    """
-    I2C_S_50KHZ  = 0x30
-    I2C_S_100KHZ = 0x40 
-    I2C_H_100KHZ = 0x60
-    IO_TYPE = 0x04
-    I2C_TEST = 0x58
+    """I2C operating mode of USBISS"""
+    I2C_S_20KHZ    = 0x20
+    I2C_S_50KHZ    = 0x30
+    I2C_S_100KHZ   = 0x40 
+    I2C_S_400KHZ   = 0x50 
+    I2C_H_100KHZ   = 0x60
+    I2C_H_400KHZ   = 0x70
+    I2C_H_1000KHZ  = 0x80
+    IO_TYPE        = 0x04
+    I2C_TEST       = 0x58
 
 
 
@@ -39,8 +35,26 @@ class I2C(object):
         """
         self._usbiss = USBISS(port)
         self._usbiss.set_iss_mode([self.I2C_H_100KHZ, self.IO_TYPE])
+        """
+        if handshaking not in ('H','S'):
+            raise ValueError('I2C - handshaking Hardware or Software')
+        if handshaking == 'H' and speed not in ('100', '400', '1000'):
+            raise ValueError('incorrect speed - Hardware - 100, 400 or 1000 kHz')
+        if handshaking == 'S' and speed not in ('20', '50', '100', '400'):
+            raise ValueError('I2C - incorrect speed - Software - 20, 50, 100, 400 kHz')
 
 
+        Hardware = { "H100":self.I2C_H_100KHZ, "H400":self.I2C_H_400KHZ, "H1000":self.I2C_H_1000KHZ }
+        Software = { "S20":self.I2C_S_20KHZ, "S50":self.I2C_S_50KHZ, "S100":self.I2C_S_100KHZ, "S400":self.I2C_S_400KHZ }
+        OperatingModes = {"H100":self.I2C_H_100KHZ, 
+                          "H400":self.I2C_H_400KHZ, 
+                          "H1000":self.I2C_H_1000KHZ,
+                          "S20":self.I2C_S_20KHZ, 
+                          "S50":self.I2C_S_50KHZ, 
+                          "S100":self.I2C_S_100KHZ, 
+                          "S400":self.I2C_S_400KHZ
+                        }
+        """
     def open(self):
         #Doel?
         self._usbiss.open()

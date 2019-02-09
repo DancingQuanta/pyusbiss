@@ -25,7 +25,8 @@ class I2CDevice(object):
 
         
         self._usbissi2c = usbissdevice
-        self._addr    = addr # 8 bits adress !
+        self._addr      = addr # 8 bits adress !
+        self._addr_read = addr + 1
     
     def ping(self):
             self._usbissi2c.write_data([self.I2C_TEST, self._addr])
@@ -37,15 +38,65 @@ class I2CDevice(object):
                 response = False
             return response
 
-    def _address_byte(self, read=True):
-        """Return the address byte with the specified R/W bit set.  If read is
-        True the R/W bit will be 1, otherwise the R/W bit will be 0.
+    def writeRaw8(self, value):
         """
+        Write single byte for non-registered devices, such as the Philips PCF8574 I/O chip.
+        """
+        # Write is op het basisadres
+        value = value & 0xFF
+        self._usbissi2c.write_data([self.I2C_SGL, self._addr, value])
+        resp = self._usbissi2c.read_data(1)
+        resp = self._usbissi2c.decode(resp)
+        if resp != [1]:
+            raise RuntimeError("I2CDevice - writeRaw8 - TransmissionError")
 
-        if read:
-            return (self._addr << 1) | 0x01
-        else:
-            return self._addr << 1
+    def write8(self, register, value):
+        """Write an 8-bit value to the specified register."""
+        value = value & 0xFF
+        self._usbissi2c.write_data([self.I2C_AD1, self._addr, register, 1 , value])
+        resp = self._usbissi2c.read_data(1)
+        resp = self._usbissi2c.decode(resp)
+        if resp != [1]:
+            raise RuntimeError("I2CDevice - write8 - TransmissionError")
+
+    def write16(self, register, value,  little_endian=True):
+        """Write a 16-bit value to the specified register."""
+        value = value & 0xFFFF
+        value_low  = value & 0xFF
+        value_high = (value >> 8) & 0xFF
+        if little_endian:
+            value = [value_low, value_high]
+        value = [value_high, value_low]
+
+        self._usbissi2c.write_data([self.I2C_AD1, self._addr, register, 2 ]+value)
+        resp = self._usbissi2c.read_data(1)
+        resp = self._usbissi2c.decode(resp)
+        if resp != [1]:
+            raise RuntimeError("I2CDevice - write16 - TransmissionError")
+    
+
+    def writeList(self, register, data):
+        """Write bytes to the specified register."""
+        # Data is a bytearray
+        length = len(data)
+        self._usbissi2c.write_data([self.I2C_AD1, self._addr, register, length] + data)
+        # ToDo check op data, concatenaten van de list tot een reeks getallen ? Testen !!!
+        resp = self._usbissi2c.read_data(1)
+        resp = self._usbissi2c.decode(resp)
+        if resp != [1]:
+            raise RuntimeError("I2CDevice - writeList - TransmissionError")
+
+
+    def readList(self, register, length):
+        """Read a length number of bytes from the specified register.  Results
+        will be returned as a bytearray."""
+        self._usbissi2c.write_data([self.I2C_AD1, self._addr_read, register, length]) 
+        resp = self._usbissi2c.read_data(length)
+        resp = self._usbissi2c.decode(resp)
+        if len(resp) > 0:
+            return resp
+        else: 
+            return resp
 
     def readRaw8(self):
         """
@@ -53,87 +104,71 @@ class I2CDevice(object):
         ADAFruit - Read an 8-bit value on the bus (without register).
         """
 
-        readadr = self._addr+1
-        # readadr = 0x41
-        self._usbissi2c.write_data([self.I2C_SGL, readadr]) # ToDo - Readadress !
+        self._usbissi2c.write_data([self.I2C_SGL, self._addr_read]) 
         # time.sleep(0.1)
         resp = self._usbissi2c.read_data(1) # Reads 1 byte / 8 bits
         resp = self._usbissi2c.decode(resp)
-        return resp[0]
+        if len(resp) > 0:
+            return resp[0]
+        else: 
+            return resp
     
-    def writeRaw8(self, value):
-        """
-        Write single byte for non-registered devices, such as the Philips PCF8574 I/O chip.
-        """
-        # Write is op het basisadres
-        self._usbissi2c.write_data([self.I2C_SGL, self._addr, value])
-        resp = self._usbissi2c.read_data(1)
-        resp = self._usbissi2c.decode(resp)
-        if resp == [0]:
-            raise RuntimeError("I2CDevice - writeRaw8 - TransmissionError")
-
-    def write8(self, register, value):
-        """Write an 8-bit value to the specified register."""
-        self._usbissi2c.write_data([self.I2C_AD1, self._addr, register, 1 , value])
-        resp = self._usbissi2c.read_data(1)
-        resp = self._usbissi2c.decode(resp)
-        if resp == [0]:
-            raise RuntimeError("I2CDevice - write8 - TransmissionError")
-
-    def write16(self, register, value):
-        """Write a 16-bit value to the specified register."""
-        self._usbissi2c.write_data([self.I2C_AD1, self._addr, register, 2 , value])
-        resp = self._usbissi2c.read_data(1)
-        resp = self._usbissi2c.decode(resp)
-        if resp == [0]:
-            raise RuntimeError("I2CDevice - write8 - TransmissionError")
-        pass
-
-    def writeList(self, register, data):
-        """Write bytes to the specified register."""
-        pass
-
-    def readList(self, register, length):
-        """Read a length number of bytes from the specified register.  Results
-        will be returned as a bytearray."""
-        pass
 
     def readU8(self, register):
         """Read an unsigned byte from the specified register."""
-        pass
+        self._usbissi2c.write_data([self.I2C_AD1, self._addr_read, register, 1]) 
+        resp = self._usbissi2c.read_data(1) # Reads 1 byte / 8 bits
+        resp = self._usbissi2c.decode(resp)
+        if len(resp) > 0:
+            return resp[0]
+        else: 
+            return resp
 
     def readS8(self, register):
         """Read a signed byte from the specified register."""
-        pass
+        result = self.readU8(register)
+        if result > 127:
+            result -= 256
+        return result
 
     def readU16(self, register, little_endian=True):
         """Read an unsigned 16-bit value from the specified register, with the
         specified endianness (default little endian, or least significant byte
         first)."""
-        pass
+        self._usbissi2c.write_data([self.I2C_AD1, self._addr_read, register, 2]) 
+        resp = self._usbissi2c.read_data(2) # Reads 1 byte / 8 bits
+        resp = self._usbissi2c.decode(resp)
+        if little_endian:
+            return (resp[-1] << 8) | resp[-2]
+        else:
+            return (resp[-2] << 8) | resp[-1]
+
 
     def readS16(self, register, little_endian=True):
         """Read a signed 16-bit value from the specified register, with the
         specified endianness (default little endian, or least significant byte
         first)."""
-        pass
+        result = self.readU16(register, little_endian)
+        if result > 32767:
+            result -= 65536
+        return result
 
     def readU16LE(self, register):
         """Read an unsigned 16-bit value from the specified register, in little
         endian byte order."""
-        pass
+        return self.readU16(register, little_endian=True)
 
     def readU16BE(self, register):
         """Read an unsigned 16-bit value from the specified register, in big
         endian byte order."""
-        pass
+        return self.readU16(register, little_endian=False)
 
     def readS16LE(self, register):
         """Read a signed 16-bit value from the specified register, in little
         endian byte order."""
-        pass
+        return self.readS16(register, little_endian=True)
 
     def readS16BE(self, register):
         """Read a signed 16-bit value from the specified register, in big
         endian byte order."""
-        pass
+        return self.readS16(register, little_endian=False)

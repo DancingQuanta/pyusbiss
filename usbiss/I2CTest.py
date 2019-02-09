@@ -3,6 +3,8 @@ import i2c as I2C
 import time
 import I2CDevice as I2CDevice 
 
+
+
 I2Channel = I2C.I2C('COM3', 'H', 100) 
 # Check succesfull basic setup
 print(I2Channel._usbiss.__repr__)
@@ -14,11 +16,13 @@ for I2CDev in I2CDevices:
     print(I2CDev)
 
 
-pca8574 = I2CDevice.I2CDevice(I2Channel, 72)
 
-print(pca8574.ping())
-pca8574.writeRaw8(0)
+def pca8574():
+    pca8574 = I2CDevice.I2CDevice(I2Channel, 72)
 
-resp = pca8574.readRaw8()
+    print(pca8574.ping())
+    pca8574.writeRaw8(0)
 
-print (resp)
+    resp = pca8574.readRaw8()
+
+    print (resp)

@@ -1,5 +1,7 @@
 """Implements a HD44780 character LCD connected via PCF8574 on I2C."""
 """ GdH - Using inheritance of I2CDevice)                          """
+""" Based on https://github.com/dhylands/python_lcd/blob/master/lcd/pyb_i2c_lcd.py """
+
 
 from lcd_api import LcdApi
 from I2CDevice import I2CDevice
