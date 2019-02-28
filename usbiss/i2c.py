@@ -76,12 +76,15 @@ class I2C(object):
         A single byte is returned, zero if no device is detected or non-zero if the device was detected.
          """
         response=[]
-        for devadr in range(127): # ToDo : Check range.
+        for devadr in range(255): # ToDo : Check range.
             self._usbiss.write_data([self.I2C_TEST, devadr])
+
             resp = self._usbiss.read_data(1)
             resp = self._usbiss.decode(resp)
             if resp != [0]:
                 response.append(devadr)
+                print('Found')
+            # print(devadr)
         return response
         #ToDo : convert to : List Comprehension
         # ToDo : Check if we need to wait 500mS for a response and otherwise raise an error.

@@ -172,3 +172,33 @@ class I2CDevice(object):
         """Read a signed 16-bit value from the specified register, in big
         endian byte order."""
         return self.readS16(register, little_endian=False)
+
+    def writeMem(self, AdressHighByte, AdressLowByte, length, data):
+        """
+        Write 2 byte addressed devices, eeproms from 32kbit (4kx8) and up. 
+        The maximum number of data bytes should not exceed 59 so as not to overflow the USB-ISS's 64 byte internal buffer.
+        """
+        if length > 59:
+            raise ValueError("I2CDevice - writeMem - max 59 bytes exceeded.")
+        self._usbissi2c.write_data([self.I2C_AD2, self._addr, AdressHighByte, AdressLowByte, length] + data) 
+        # Avoid transmission errors.
+        time.sleep(0.05)
+        resp = self._usbissi2c.read_data(1)
+        resp = self._usbissi2c.decode(resp)
+        if resp != [1]:
+            raise RuntimeError("I2CDevice - writeList - TransmissionError - " + str(AdressHighByte) + '-' + str(AdressLowByte)) 
+
+    def readMem(self, AdressHighByte, AdressLowByte, length):
+        """
+        Read 2 byte addressed devices, eeproms from 32kbit (4kx8) and up.
+        The maximum number of data bytes requested should not exceed 64 so as not to overflow the USB-ISS's internal buffer.
+        """
+        if length > 64:
+            raise ValueError("I2CDevice - readMem - max 64 bytes exceeded.")
+        self._usbissi2c.write_data([self.I2C_AD2, self._addr_read, AdressHighByte, AdressLowByte, length]) 
+        resp = self._usbissi2c.read_data(length)
+        resp = self._usbissi2c.decode(resp)
+        if len(resp) > 0:
+            return resp
+        else: 
+            return resp

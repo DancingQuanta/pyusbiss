@@ -71,9 +71,38 @@ def test_writelist():
     # self.i2c.send(b'\x00\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00', self.i2c_addr)
     mcp23008.writeList(IODIR, [0x00, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])       
 
-    registers = mcp23008.readList( IODIR, 11)  
+    registers = mcp23008.readList( IODIR, 50)  
+    print(len(registers))
     for i in registers:
         print(i, end=',')  
 
+def i2c_stresstest():
+    # GdH 10-2-2019
+    # Stresstest door een poort te schakelen en het resultaat te testen  via een andere poort
+    # Setup :
+    # poort 1 als output
+    # poort 2 als input
+    # repeat :
+    #
 
-test_writelist()
+
+    mcp23008 = I2CDevice.I2CDevice(I2Channel, 64)
+    mcp23008.writeList(IODIR, [0x00, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])  
+    mcp23008.write8(IODIR, 0b01111111)
+    # setoutputport         data &= ~(1 << (self.pin - 1))
+    i=0
+    while(True):
+        i=i+1 
+        mcp23008.write8(GPIO, 0b11111111)
+        t = mcp23008.readU8(GPIO)
+        pin = (t & 0b01000000) >> 6
+        if not pin: 
+            raise ValueError
+        mcp23008.write8(GPIO, 0b01111111)
+        t = mcp23008.readU8(GPIO)
+        pin = (t & 0b0100000) >> 6
+        if pin:
+            raise ValueError
+        
+
+scan()
