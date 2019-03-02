@@ -28,7 +28,7 @@ class I2ctestCase(unittest.TestCase):
         pass
 
     def tearDown(self):
-        pass # self.i2cchannel.close()
+        pass 
 
     def test1_parameters_H(self):
         self.assertIsNotNone(i2c.I2C(Port, 'H', 100))
