@@ -10,7 +10,7 @@ with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
 requirements = ['pyserial']
-__version__ = '0.1.0'
+__version__ = '0.2.2'
 
 setup(
     name='pyusbiss',
