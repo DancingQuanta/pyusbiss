@@ -45,7 +45,7 @@ class I2C(object):
         try:
             setting = OperatingModes[key]
         except KeyError:
-            ValueError('I2C - This combination of handshaking and speed is not supported' + str(handshaking)  + ' '+ str(speed)) 
+            raise ValueError('I2C - This combination of handshaking and speed is not supported : ' + str(handshaking)  + ' '+ str(speed)) 
 
         self._usbiss = USBISS(port)
         self._usbiss.set_iss_mode([setting, self.IO_TYPE])
@@ -72,10 +72,8 @@ class I2C(object):
                 response.append(devadr)
 
         return response
-        #ToDo : convert to : List Comprehension
-        # ToDo : Check if we need to wait 500mS for a response and otherwise raise an error.
 
-    # GdH 5-1-2019 - is dit een goede oplossing ? ToDo !
+    # GdH 5-1-2019 - TODO - is this a good solution ? 
     def write_data(self, data):
         self._usbiss.write_data(data)
         
