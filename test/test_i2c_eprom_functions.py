@@ -35,7 +35,7 @@ class I2ctestCase(unittest.TestCase):
 
 
     def _writepattern(self):
-        pat1 = [0x0f]
+        pat1 = [0x0f]Examples
         pat2= [0xf0]
         self.writebuf=[]
         for high_adress in range(1):
