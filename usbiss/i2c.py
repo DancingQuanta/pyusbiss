@@ -8,7 +8,7 @@
 
 """I2C support for USB-ISS"""
 
-from usbiss import USBISS
+from .usbiss import USBISS
 import time
 
 
@@ -28,64 +28,49 @@ class I2C(object):
 
     def __init__(self, port, handshaking, speed):
         """
-        ToDo : 
-        handshaking : Hardware of Software
-        Speed Software : 20, 50, 100, 400
-        Speed Hardware : 100, 400, 10000
-        24-12-18 - POC -->  with Hardware 100Khz --> I2C_H_100KHZ
-        """
-        self._usbiss = USBISS(port)
-        self._usbiss.set_iss_mode([self.I2C_H_100KHZ, self.IO_TYPE])
-        """
-        if handshaking not in ('H','S'):
-            raise ValueError('I2C - handshaking Hardware or Software')
-        if handshaking == 'H' and speed not in ('100', '400', '1000'):
-            raise ValueError('incorrect speed - Hardware - 100, 400 or 1000 kHz')
-        if handshaking == 'S' and speed not in ('20', '50', '100', '400'):
-            raise ValueError('I2C - incorrect speed - Software - 20, 50, 100, 400 kHz')
 
+        """
+        if handshaking not in ('H', 'S'):
+            ValueError ('I2C - Handshaking is (H)ardware or (S)oftware/ not %s' % str(handshaking))
 
-        Hardware = { "H100":self.I2C_H_100KHZ, "H400":self.I2C_H_400KHZ, "H1000":self.I2C_H_1000KHZ }
-        Software = { "S20":self.I2C_S_20KHZ, "S50":self.I2C_S_50KHZ, "S100":self.I2C_S_100KHZ, "S400":self.I2C_S_400KHZ }
-        OperatingModes = {"H100":self.I2C_H_100KHZ, 
-                          "H400":self.I2C_H_400KHZ, 
-                          "H1000":self.I2C_H_1000KHZ,
-                          "S20":self.I2C_S_20KHZ, 
-                          "S50":self.I2C_S_50KHZ, 
-                          "S100":self.I2C_S_100KHZ, 
-                          "S400":self.I2C_S_400KHZ
+        key = str(handshaking)+str(speed)
+        OperatingModes = {'H100':self.I2C_H_100KHZ, 
+                          'H400':self.I2C_H_400KHZ, 
+                          'H1000':self.I2C_H_1000KHZ,
+                          'S20':self.I2C_S_20KHZ, 
+                          'S50':self.I2C_S_50KHZ, 
+                          'S100':self.I2C_S_100KHZ, 
+                          'S400':self.I2C_S_400KHZ
                         }
-        """
+        try:
+            setting = OperatingModes[key]
+        except KeyError:
+            ValueError('I2C - This combination of handshaking and speed is not supported' + str(handshaking)  + ' '+ str(speed)) 
+
+        self._usbiss = USBISS(port)
+        self._usbiss.set_iss_mode([setting, self.IO_TYPE])
+
     def open(self):
-        #Doel?
         self._usbiss.open()
 
-
     def close(self):
-        #Doel?
         self._usbiss.close()
-
-
-
 
     def scan(self):
         """
         Scan the bus for I2C devices. Returns a list of devices
         max 127 devices per bus
-        I2C_TEST - Adress
-        0x58 - devAdr
         A single byte is returned, zero if no device is detected or non-zero if the device was detected.
          """
         response=[]
         for devadr in range(255): # ToDo : Check range.
-            self._usbiss.write_data([self.I2C_TEST, devadr])
+            self.write_data([self.I2C_TEST, devadr])
 
-            resp = self._usbiss.read_data(1)
-            resp = self._usbiss.decode(resp)
+            resp = self.read_data(1)
+            resp = self.decode(resp)
             if resp != [0]:
                 response.append(devadr)
-                print('Found')
-            # print(devadr)
+
         return response
         #ToDo : convert to : List Comprehension
         # ToDo : Check if we need to wait 500mS for a response and otherwise raise an error.
@@ -113,7 +98,8 @@ class I2C(object):
 
 
 class I2CDevice(object):
-
+    """
+    """
     I2C_SGL    = 0x53 # Read/Write single byte for non-registered devices, such as the Philips PCF8574 I/O chip.
     I2C_AD0    = 0x54 # Read/Write multiple bytes for devices without internal address or where address does not require resetting.
     I2C_AD1    = 0x55 # Read/Write 1 byte addressed devices (the majority of devices will use this one)
@@ -122,13 +108,7 @@ class I2CDevice(object):
     I2C_TEST   = 0x58 # Used to check for the existence of an I2C device on the bus. (V5 or later firmware only)
 
     def __init__(self, usbissdevice, addr):
-        """
-        ToDo : 
-        handshaking : Hardware of Software
-        Speed Software : 20, 50, 100, 400
-        Speed Hardware : 100, 400, 10000
-        24-12-18 - POC -->  with Hardware 100Khz --> I2C_H_100KHZ
-        """
+
 
         
         self._usbissi2c = usbissdevice
@@ -136,6 +116,8 @@ class I2CDevice(object):
         self._addr_read = addr + 1
     
     def ping(self):
+            """
+            """
             self._usbissi2c.write_data([self.I2C_TEST, self._addr])
             resp = self._usbissi2c.read_data(1)
             resp = self._usbissi2c.decode(resp)
@@ -147,6 +129,8 @@ class I2CDevice(object):
 
     def writeRaw8(self, value):
         """
+        value : 1 byte to write
+
         Write single byte for non-registered devices, such as the Philips PCF8574 I/O chip.
         """
         # Write is op het basisadres
@@ -207,6 +191,8 @@ class I2CDevice(object):
 
     def readRaw8(self):
         """
+        :returns: 1 byte of data, emptylist ?? TODO Check with unittest
+
         Read single byte for non-registered devices, such as the Philips PCF8574 I/O chip.
         ADAFruit - Read an 8-bit value on the bus (without register).
         """
@@ -280,16 +266,24 @@ class I2CDevice(object):
         endian byte order."""
         return self.readS16(register, little_endian=False)
 
+    # These functions (writeMem, readMem) are not part of the Adafruit protocol library. Specific for the USBISS device
     def writeMem(self, AdressHighByte, AdressLowByte, length, data):
         """
+        AdressHighByte, AdressLowByte : Adress of the memory location within the EPROM.
+        lenght                        : length of the transmitted data
+        data                          : bytearray of data
+
         Write 2 byte addressed devices, eeproms from 32kbit (4kx8) and up. 
         The maximum number of data bytes should not exceed 59 so as not to overflow the USB-ISS's 64 byte internal buffer.
         """
         if length > 59:
             raise ValueError("I2CDevice - writeMem - max 59 bytes exceeded.")
+        
         self._usbissi2c.write_data([self.I2C_AD2, self._addr, AdressHighByte, AdressLowByte, length] + data) 
+
         # Avoid transmission errors.
         time.sleep(0.05)
+
         resp = self._usbissi2c.read_data(1)
         resp = self._usbissi2c.decode(resp)
         if resp != [1]:
@@ -297,18 +291,21 @@ class I2CDevice(object):
 
     def readMem(self, AdressHighByte, AdressLowByte, length):
         """
+        AdressHighByte, AdressLowByte : Adress of the memory location within the EPROM.
+        lenght                        : no of bytes to receive
+
         Read 2 byte addressed devices, eeproms from 32kbit (4kx8) and up.
         The maximum number of data bytes requested should not exceed 64 so as not to overflow the USB-ISS's internal buffer.
         """
         if length > 64:
             raise ValueError("I2CDevice - readMem - max 64 bytes exceeded.")
+
         self._usbissi2c.write_data([self.I2C_AD2, self._addr_read, AdressHighByte, AdressLowByte, length]) 
+
         resp = self._usbissi2c.read_data(length)
         resp = self._usbissi2c.decode(resp)
-        if len(resp) > 0:
-            return resp
-        else: 
-            return resp
+        return resp
+
 
 
     
