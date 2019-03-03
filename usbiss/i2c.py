@@ -48,7 +48,7 @@ class I2C(object):
             raise ValueError('I2C - This combination of handshaking and speed is not supported : ' + str(handshaking)  + ' '+ str(speed)) 
 
         self._usbiss = USBISS(port)
-        self._usbiss.set_iss_mode([setting, self.IO_TYPE])
+        self._usbiss.mode = [setting, self.IO_TYPE]
 
     def open(self):
         self._usbiss.open()

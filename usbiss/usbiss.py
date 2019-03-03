@@ -146,7 +146,7 @@ class USBISS(object):
                 0x07: 'Internal Error 2'
             }
             try:
-                raise USBISSError(error_dict[response(1)])
+                raise USBISSError(error_dict[response[1]])
             except KeyError:
                 raise USBISSError('Undocumented Error')
 
