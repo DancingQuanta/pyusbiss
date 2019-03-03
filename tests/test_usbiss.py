@@ -30,6 +30,10 @@ SPI_MODE        =   0x90
 SERIAL          =   0x01
 # IO_MODE : Pinsettings
 IO_TYPE         =   0x04
+# Test incorrect mode
+INCORRECT_MODE  =   0xAA
+# query for serial, firmware and mode
+ISS_VERSION     = 0x01
 
 import sys
 import unittest
@@ -39,6 +43,8 @@ from usbiss import usbiss
 
 #USBISS parameter
 Port = 'COM3'
+
+# TODO : check the real mode instead of the getter. (3-3-2019)
 
 class I2ctestCase(unittest.TestCase):
     """ I2C driver register functions testcase """
@@ -58,8 +64,30 @@ class I2ctestCase(unittest.TestCase):
         curmod = _usbiss.mode
         self.assertEqual([IO_MODE], curmod)
  
+    def test_operating_modes(self):
+        _usbiss = usbiss.USBISS(Port)
+        for opmode in [IO_MODE, IO_CHANGE, I2C_S_20KHZ]:
+            with self.subTest(opmode = [opmode]):
+                _usbiss.mode = [opmode]
+                curmod = _usbiss.mode
+                self.assertEqual([opmode], curmod)
 
+    def test_incorrect_operating_mode(self):
+        _usbiss = usbiss.USBISS(Port)
+        _usbiss.mode = [INCORRECT_MODE]
+        curmod = _usbiss.mode
+        self.assertEqual([INCORRECT_MODE], curmod)
 
+    def test_latest_firmware(self):
+        latest_firmware = 0x08
+        _usbiss = usbiss.USBISS(Port)
+        _usbiss.write_data([ISS_CMD, ISS_VERSION])
+        response = _usbiss.read_data(3)
+        response = _usbiss.decode(response)
+        # module = response[0]
+        firmware = response[1]
+        # mode = response[2]
+        self.assertEqual(firmware, latest_firmware, 'Latest version = %i' % latest_firmware)
 
 if __name__ == '__main__':
     sys.stdout.write(__doc__)
