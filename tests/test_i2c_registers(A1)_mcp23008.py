@@ -6,7 +6,7 @@
 
 """
 Geert de Haan / 1-3-2019
-Testing the I2C module functions for devices with registers. 
+Testing the I2C module functions for devices with registers. USBISS (I2C_AD1)
 
 Hardware :
 MCP23008 IO Expander connected to the USBISS () (no pullup R's)
@@ -34,7 +34,7 @@ OLAT    = 0x0A  # Output latch register
 #USBISS parameter
 Port = 'COM3'
 # I2C parameters
-Handshaking ='H'
+Handshaking ='S'
 Speed = 100
 # MCP23008 Adress
 McpAddress = 64
@@ -54,8 +54,38 @@ class I2ctestCase(unittest.TestCase):
         else:
             return False
 
+    def _write16read16BE(self, data, little_endian):
+        """
+        helper function for testing the 16 bit register functions
+        """
+        write2bytes = data
+        register = IODIR
+     
+        # Write the 2 bytes Big Endian
+        self.mcp23008.write16(register, write2bytes, little_endian)
+        readbytes = self.mcp23008.readU16(register, little_endian)
+        if readbytes == write2bytes:
+            return True
+        else:
+            return False
+
+    def _writeListreadList(self, data):
+        """
+        helper function for testing the 16 writelist register functions
+        """
+        writebytesarray = data
+        register = IODIR
+     
+        # Write the list of bytes to a register and read back the register content.
+        self.mcp23008.writeList(register, writebytesarray)
+        readbytesarray = self.mcp23008.readList(register, 3)
+        if readbytesarray == writebytesarray:
+            return True
+        else:
+            return False
+
     def setUp(self):
-        self.i2cchannel = i2c.I2C(Port, 'H', 100)
+        self.i2cchannel = i2c.I2C(Port, Handshaking, Speed)
         print(self.i2cchannel._usbiss.__repr__)
         self.mcp23008 = i2c.I2CDevice(self.i2cchannel, McpAddress)
 
@@ -70,7 +100,16 @@ class I2ctestCase(unittest.TestCase):
     def test2_i2device_write8(self):
         self.assertTrue(self._write8read8(0b01010101))
 
+    # test the write16 and read16 functions with big - and little Endian
+    def test3_i2cdevice_write16_BE(self):
+        self.assertTrue(self._write16read16BE(0xFF00, False))
+    
+    def test4_i2cdevice_write16_LE(self):
+        self.assertTrue(self._write16read16BE(0xFF00, True))
 
+    # test the writelist function by writing a list to the MCP23008 registers and reading it back
+    def test5_i2cdevice_writelist(self):
+        self.assertTrue(self._writeListreadList([0xFF, 0x00, 0xFF]))
  
 
 
