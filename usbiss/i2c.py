@@ -155,7 +155,8 @@ class I2CDevice(object):
         value_high = (value >> 8) & 0xFF
         if little_endian:
             value = [value_low, value_high]
-        value = [value_high, value_low]
+        else:
+            value = [value_high, value_low]
 
         self._usbissi2c.write_data([self.I2C_AD1, self._addr, register, 2 ]+value)
         resp = self._usbissi2c.read_data(1)
