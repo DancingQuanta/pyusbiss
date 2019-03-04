@@ -18,7 +18,7 @@ ISS_MODE        =   0x02
 
 #USBISS Operating modes
 IO_MODE         =   0x00
-IO_CHANGE       =   0x10
+IO_CHANGE       =   0x10 # is not a real mode. mode stays IO_MODE 
 I2C_S_20KHZ     =   0x20
 I2C_S_50KHZ     =   0x30
 I2C_S_100KHZ    =   0x40 
@@ -55,28 +55,37 @@ class I2ctestCase(unittest.TestCase):
     def tearDown(self):
         pass
 
+    def _get_usbiss_mode(self, _usbiss):
+        _usbiss.write_data([ISS_CMD, ISS_VERSION])
+        response = _usbiss.read_data(3)
+        response = _usbiss.decode(response)
+        mode = response[2]
+        return mode
+        
     def test1_basicfunctionality(self):
         self.assertIsNotNone(usbiss.USBISS(Port))
 
     def test2_check_iomode(self):
         _usbiss = usbiss.USBISS(Port)
         _usbiss.mode = [IO_MODE]
-        curmod = _usbiss.mode
-        self.assertEqual([IO_MODE], curmod)
+        curmod = self._get_usbiss_mode(_usbiss)
+        self.assertEqual([IO_MODE], [curmod])
+        _usbiss.close()
  
     def test_operating_modes(self):
         _usbiss = usbiss.USBISS(Port)
-        for opmode in [IO_MODE, IO_CHANGE, I2C_S_20KHZ]:
+        # IO_CHANGE not tested, mode stays IO_MODE
+        for opmode in [IO_MODE, I2C_S_20KHZ,I2C_S_50KHZ,I2C_S_100KHZ,I2C_S_400KHZ,I2C_H_100KHZ,I2C_H_400KHZ,I2C_H_1000KHZ,SPI_MODE,SERIAL]:
             with self.subTest(opmode = [opmode]):
                 _usbiss.mode = [opmode]
-                curmod = _usbiss.mode
-                self.assertEqual([opmode], curmod)
+                curmod = self._get_usbiss_mode(_usbiss)
+                self.assertEqual([opmode], [curmod])
 
     def test_incorrect_operating_mode(self):
         _usbiss = usbiss.USBISS(Port)
         _usbiss.mode = [INCORRECT_MODE]
-        curmod = _usbiss.mode
-        self.assertEqual([INCORRECT_MODE], curmod)
+        curmod = self._get_usbiss_mode(_usbiss)
+        self.assertEqual([INCORRECT_MODE], [curmod])
 
     def test_latest_firmware(self):
         latest_firmware = 0x08
@@ -84,9 +93,7 @@ class I2ctestCase(unittest.TestCase):
         _usbiss.write_data([ISS_CMD, ISS_VERSION])
         response = _usbiss.read_data(3)
         response = _usbiss.decode(response)
-        # module = response[0]
         firmware = response[1]
-        # mode = response[2]
         self.assertEqual(firmware, latest_firmware, 'Latest version = %i' % latest_firmware)
 
 if __name__ == '__main__':
