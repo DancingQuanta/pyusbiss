@@ -44,55 +44,52 @@ from usbiss import usbiss
 #USBISS parameter
 Port = 'COM3'
 
-# TODO : check the real mode instead of the getter. (3-3-2019)
+
 
 class I2ctestCase(unittest.TestCase):
     """ I2C driver register functions testcase """
 
     def setUp(self):
-        pass
+        self._usbiss = usbiss.USBISS(Port)
+        self.assertIsInstance(self._usbiss, usbiss.USBISS)
 
     def tearDown(self):
-        pass
+        self._usbiss.close()
 
-    def _get_usbiss_mode(self, _usbiss):
-        _usbiss.write_data([ISS_CMD, ISS_VERSION])
-        response = _usbiss.read_data(3)
-        response = _usbiss.decode(response)
+    def _get_usbiss_mode(self):
+        self._usbiss.write_data([ISS_CMD, ISS_VERSION])
+        response = self._usbiss.read_data(3)
+        response = self._usbiss.decode(response)
         mode = response[2]
         return mode
         
     def test1_basicfunctionality(self):
-        self.assertIsNotNone(usbiss.USBISS(Port))
+        self.assertIsInstance(self._usbiss, usbiss.USBISS)
 
     def test2_check_iomode(self):
-        _usbiss = usbiss.USBISS(Port)
-        _usbiss.mode = [IO_MODE]
-        curmod = self._get_usbiss_mode(_usbiss)
+        self._usbiss.mode = [IO_MODE]
+        curmod = self._get_usbiss_mode()
         self.assertEqual([IO_MODE], [curmod])
-        _usbiss.close()
+        self._usbiss.close()
  
     def test_operating_modes(self):
-        _usbiss = usbiss.USBISS(Port)
-        # IO_CHANGE not tested, mode stays IO_MODE
+        # IO_CHANGE not tested, mode unchanged see USBISS doc
         for opmode in [IO_MODE, I2C_S_20KHZ,I2C_S_50KHZ,I2C_S_100KHZ,I2C_S_400KHZ,I2C_H_100KHZ,I2C_H_400KHZ,I2C_H_1000KHZ,SPI_MODE,SERIAL]:
             with self.subTest(opmode = [opmode]):
-                _usbiss.mode = [opmode]
-                curmod = self._get_usbiss_mode(_usbiss)
+                self._usbiss.mode = [opmode]
+                curmod = self._get_usbiss_mode()
                 self.assertEqual([opmode], [curmod])
 
     def test_incorrect_operating_mode(self):
-        _usbiss = usbiss.USBISS(Port)
-        _usbiss.mode = [INCORRECT_MODE]
-        curmod = self._get_usbiss_mode(_usbiss)
-        self.assertEqual([INCORRECT_MODE], [curmod])
+        with self.assertRaises(usbiss.USBISSError):
+            self._usbiss.mode = [INCORRECT_MODE]
+
 
     def test_latest_firmware(self):
         latest_firmware = 0x08
-        _usbiss = usbiss.USBISS(Port)
-        _usbiss.write_data([ISS_CMD, ISS_VERSION])
-        response = _usbiss.read_data(3)
-        response = _usbiss.decode(response)
+        self._usbiss.write_data([ISS_CMD, ISS_VERSION])
+        response = self._usbiss.read_data(3)
+        response = self._usbiss.decode(response)
         firmware = response[1]
         self.assertEqual(firmware, latest_firmware, 'Latest version = %i' % latest_firmware)
 
