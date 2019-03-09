@@ -73,7 +73,7 @@ class I2ctestCase(unittest.TestCase):
         self._usbiss.close()
  
     def test_operating_modes(self):
-        # IO_CHANGE not tested, mode unchanged see USBISS doc
+        # IO_CHANGE not tested, mode unchanged, see USBISS doc
         for opmode in [IO_MODE, I2C_S_20KHZ,I2C_S_50KHZ,I2C_S_100KHZ,I2C_S_400KHZ,I2C_H_100KHZ,I2C_H_400KHZ,I2C_H_1000KHZ,SPI_MODE,SERIAL]:
             with self.subTest(opmode = [opmode]):
                 self._usbiss.mode = [opmode]
