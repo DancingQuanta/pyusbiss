@@ -18,7 +18,7 @@ import unittest
 from usbiss import i2c
 
 Port = 'COM3'
-Address = 78
+Address = 120
 
 class I2CTestCaseSGL_noregister(unittest.TestCase):
     """ I2C driver no register functions testcase """
@@ -27,11 +27,13 @@ class I2CTestCaseSGL_noregister(unittest.TestCase):
     def _SetPinOn(self, pin):
         data = self.pcf8574.readRaw8() 
         data |= 1 << (pin)
+        data |= self.IODIR
         self.pcf8574.writeRaw8(data)
 
     def _SetPinOff(self, pin):
         data = self.pcf8574.readRaw8() 
         data &= ~(1 << (pin))
+        data |= self.IODIR
         self.pcf8574.writeRaw8(data)
 
     def _GetPin(self, pin):
@@ -45,8 +47,8 @@ class I2CTestCaseSGL_noregister(unittest.TestCase):
         self.assertIsInstance(self.i2cchannel, i2c.I2C)
         # print(self.i2cchannel._usbiss.__repr__)
         self.pcf8574 = i2c.I2CDevice(self.i2cchannel, Address)
-        self.pcf8574.writeRaw8(0xFF)
         self.assertIsInstance(self.pcf8574, i2c.I2CDevice)
+        self.IODIR = 0x0F
 
     def tearDown(self):
         self.i2cchannel.close()
@@ -64,17 +66,11 @@ class I2CTestCaseSGL_noregister(unittest.TestCase):
             response = False
         self.assertEqual(response, True, 'Device not found at i2c Address : %s' % Address)
 
-    def test2_i2cdevice_writeraw8(self):
-        time.sleep(1)
-        writebyte = 0b01010101
-        self.pcf8574.writeRaw8(writebyte)
-        readbyte = self.pcf8574.readRaw8()
-        self.assertEqual(readbyte, writebyte)
 
     def test2_i2cdevice_loopback(self):
         time.sleep(1)
-        OUTPUTPIN = 0
-        INPUTPIN  = 1
+        OUTPUTPIN = 7
+        INPUTPIN  = 0
         ON = 1
         OFF = 0
         # Set OUTPUTPIN off and check te result
@@ -91,6 +87,8 @@ class I2CTestCaseSGL_noregister(unittest.TestCase):
         self._SetPinOff(OUTPUTPIN)
         pinstat = self._GetPin(INPUTPIN)
         self.assertEqual(pinstat, OFF)
+
+
 
 if __name__ == '__main__':
     sys.stdout.write(__doc__)
