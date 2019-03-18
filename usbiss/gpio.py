@@ -5,7 +5,7 @@
 
 """GPIO support for USB-ISS"""
 
-import  usbiss
+from .usbiss import USBISS
 
 
 class GPIO(object):
@@ -33,9 +33,9 @@ class GPIO(object):
         # external circuit and the USBISS from damage.
         self.ControlRegister = 0b10101010 # All inputs
         self.DataRegister = 0x00
-        self._usbiss = usbiss.USBISS(port)
+        self._usbiss = USBISS(port)
 
-        self._usbiss.set_iss_mode([self.IO_MODE, self.ControlRegister])
+        self.configure()
 
 
     def open(self):
@@ -50,7 +50,7 @@ class GPIO(object):
         """
         Configure GPIO controller
         """
-        self._usbiss.set_iss_mode([self.IO_CHANGE, self.ControlRegister])
+        self._usbiss.mode = [self.IO_CHANGE, self.ControlRegister]
 
     def _setup_pin(self, pin, mode):
         """
