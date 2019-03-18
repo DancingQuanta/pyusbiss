@@ -7,6 +7,7 @@
 
 from .usbiss import USBISS
 
+HIGH = 1 
 
 class GPIO(object):
     """GPIO operating mode of USBISS
