@@ -3,14 +3,21 @@
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 # GdH - based on FT232H.py library from Adafruit for the FT232 (FTDI)
 
-"""GPIO support for USB-ISS"""
 
-from .usbiss import USBISS
 
+
+LOW  = 0
 HIGH = 1 
+OUT  = 0b00
+OUTH = 0b01
+IN   = 0b10
+ADC  = 0b11
 
 class GPIO(object):
     """GPIO operating mode of USBISS
+       as GPIO is also used in combination with I2C and Serial
+       this class does not open an connection to the USBISS itself, but is depending on a
+       masterclass to supply the connection
     """
 
 
@@ -20,21 +27,16 @@ class GPIO(object):
     IO_GETPINS_CMD = 0x64
     IO_GETAD_CMD = 0x65
     # Pin mode (IO_TYPE)
-    OUT  = 0b00
-    OUTH = 0b01
-    IN   = 0b10
-    ADC  = 0b11
-
-    HIGH=1
-    LOW=0
 
 
-    def __init__(self, port):
+
+
+    def __init__(self, usbiss_con):
         # Default Configure USB-ISS as IO all pins as input to protect the
         # external circuit and the USBISS from damage.
         self.ControlRegister = 0b10101010 # All inputs
         self.DataRegister = 0x00
-        self._usbiss = USBISS(port)
+        self._usbiss = usbiss_con 
 
         self.configure()
 
@@ -53,6 +55,17 @@ class GPIO(object):
         """
         self._usbiss.mode = [self.IO_CHANGE, self.ControlRegister]
 
+    def send_dataregister(self):
+        """
+        Send the dataregister to the USBISS device
+        """
+        self._usbiss.write_data([self.IO_SETPINS_CMD, self.DataRegister])
+        resp = self._usbiss.read_data(1)
+        resp = self._usbiss.decode(resp)
+        if resp != [0xFF]:
+            raise RuntimeError('USB-ISS: GPIO output - Transmission Error')
+        
+
     def _setup_pin(self, pin, mode):
         """
         Helper function to setup s GPIO pin.
@@ -60,9 +73,9 @@ class GPIO(object):
         """
         if pin < 1 or pin > 4:
             raise ValueError('Pin must be between 1 and 4')
-        if mode not in (GPIO.IN, GPIO.OUT, GPIO.ADC):
+        if mode not in (IN, OUT, ADC):
             raise ValueError('Mode must be GPIO.IN, GPIO.OUT or GPIO.ADC')
-        # print('setup - before', format(self.ControlRegister, '08b'))
+
         for i in range(0, 2):
             if mode & 1 << i:
                 self.ControlRegister |= 1 << (pin -1) * 2 + i
@@ -76,20 +89,25 @@ class GPIO(object):
         Set the input or output mode for a specified pin.  Mode should be
         either OUT or IN or ADC.
         """
-        # print('setup - before', format(self.ControlRegister, '08b'))
         self._setup_pin(pin, mode)
-        # print('setup - after', format(self.ControlRegister, '08b'))
         self.configure()
 
     def setup_pins(self, pins, values={}):
-        """Setup multiple pins as inputs or outputs at once.  Pins should be a
+        """
+        Ex : setup_pins({1:gpio.OUT, 2:gpio.OUT, 3:gpio.IN, 4: gpio.IN}, {1:gpio.HIGH, 2:gpio.HIGH})
+        Setup multiple pins as inputs or outputs at once.  Pins should be a
         dict of pin name to pin mode (IN or OUT).  Optional starting values of
         pins can be provided in the values dict (with pin name to pin value).
         """
+        # pin setup
         for pin, mode in pins.items():
             self._setup_pin(pin, mode)
+        self.configure()
+        # pin values
         for pin, value in values.items():
             self._output_pin(pin, value)
+        self.send_dataregister()
+
 
     def _output_pin(self, pin, level):
         """
@@ -108,12 +126,7 @@ class GPIO(object):
         either HIGH/LOW or a boolean (true = high).
         """
         self._output_pin(pin, level)
-        self._usbiss.write_data([self.IO_SETPINS_CMD, self.DataRegister])
-        response = self._usbiss.read_data(1)
-        if response != 0xFF:
-            raise RuntimeError('USB-ISS: GPIO output - Transmission Error')
-        return response
-
+        self.send_dataregister()
 
     def output_pins(self, pins):
         """Set multiple pins high or low at once.  Pins should be a dict of pin
@@ -122,9 +135,8 @@ class GPIO(object):
         """
         for pin, value in iter(pins.items()):
             self._output_pin(pin, value)
-        self._usbiss.write_data([self.IO_SETPINS_CMD, self.DataRegister])
-        response = self._usbiss.read_data(1)
-        #TODO - Raise exception when respond != 0xFF or handle in _usbiss.write_data
+        self.send_dataregister()
+
 
     def input(self, pin):
         """
@@ -133,8 +145,6 @@ class GPIO(object):
         """
         self._usbiss.write_data([self.IO_GETPINS_CMD])
         self.DataRegister = int.from_bytes(self._usbiss.read_data(1), byteorder='little')
-        # DEBUG print(type(self.DataRegister))
-        # DEBUG print('input {}', format(self.DataRegister, '08b'))
         return(self.DataRegister & (1 << (pin -1)) !=0)
 
     def input_pins(self, pins):
@@ -150,12 +160,11 @@ class GPIO(object):
         # Adafruit - return [((_pins >> pin) & 0x0001) == 1 for pin in pins]
         return [((self.DataRegister >> (pin-1))& 0x0001) for pin in pins]
 
-        
 
     def adc(self, pin, vcc):
         """
         Read the analog voltage on the pin. vcc is the provided voltage to
-        tot the USBISS and is used as reference 
+         the USBISS and is used as reference for the pin voltage.
         """
         self._usbiss.write_data([self.IO_GETAD_CMD, pin])
         adcv = self._usbiss.read_data(2)
