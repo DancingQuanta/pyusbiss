@@ -16,7 +16,7 @@ import unittest
 from usbiss import i2c
 
 Port = 'COM3'
-McpAddress = 160
+# McpAddress = 160
 class I2ctestCase(unittest.TestCase):
     """ I2C driver register functions testcase """
 

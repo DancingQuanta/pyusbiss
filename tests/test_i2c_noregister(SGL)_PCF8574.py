@@ -6,11 +6,11 @@
 
 """
 Geert de Haan / 9-3-2019
-Testing the I2C module : USBISS - I@C_SGL command - 
+Testing the I2C module : USBISS - I2C_SGL command - 
 Read/Write single byte for non-registered devices, such as the Philips PCF8574 I/O chip.
 
 
-Hardware : 
+Hardware : Testboard met PCF8574, pin 7 connected to pin 0 for loopbacktest
 """
 import time
 import sys
