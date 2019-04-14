@@ -5,13 +5,14 @@
 # Receive  : max 62 Bytes
 # Process : 1 - send Transmit command ( optional with bytes to send)
 #           2 - response : ACK or NACK - TxCount - RxCount if RxCount > 0 [RxData 1 .. RxData n ]
-# based on pyserial
+# loosely based on pyserial
 # open() – This will open the serial port
 # close() – This will close the serial port
 # readline() – This will read a string from the serial port
 # read(size) – This will read n number of bytes from the serial port
 # write(data) – This will write the data passed to the function to the serial port
 # in_waiting – This variable holds the number of bytes in the buffer
+# out waiting - Number of bytes in the out buffer
 
 
 """Serial support for USB-ISS"""
@@ -47,6 +48,10 @@ class SERIAL(object):
 
         self._usbiss = usbiss.USBISS(port)
         self._usbiss.mode = [ self.SERIAL, brhb, brlb, 0b10101010] #Configure I/O as input.
+        self.buffer=[] # Buffer for readline method
+        print('DEBUG SERIAL, init ready')
+
+        time.sleep(1)
 
     def write(self, data):
         self._usbiss.write_data(data)
@@ -55,11 +60,6 @@ class SERIAL(object):
         ret  = self._usbiss.read_data(size)
         return ret
 
-    def readline(self):
-        """
-        read a string from the serial port
-        """
-        pass
 
     def decode(self,data):
         dec = self._usbiss.decode(data)
@@ -67,30 +67,68 @@ class SERIAL(object):
 
     def _GetResponseFrame(self):
         self.write([self.SERIAL_IO])
+        time.sleep(.1)
         resp  = self.read(3)
         frame = self.decode(resp)
         return frame
 
     def serial_write(self, data):
         """
+        serial_write
+        parameter : string of data to be send over 
         """
-        # Controleer out_waiting
-        # Bereken ruimte
-        # schrijf max ruimte weg
-        # Haal blok van de data af 
-        # alle data verzonden ?
-        # Nee (Herhaal)
-        # Ja Stop 
-        self._usbiss.write_data([self.SERIAL_IO]+data)
+        buffer = list(map(ord, data))
+        while(True):
+            n = 0
+            while(True): 
+                # wait unit there are no more characters to send in the USBISS buffer
+                outw = self.out_waiting
+                n+=1
+                if outw > 0:
+                    time.sleep(0.5)
+                    print(str(n), str(outw))
+                else:
+                    break
+            transmitbuffer = buffer[:30]
+            buffer= buffer[30:]
+            self._usbiss.write_data([self.SERIAL_IO]+transmitbuffer)
+            if len(buffer) == 0:
+                return
 
     def serial_read(self, size):
         """
+        Read the buffer, always read the full buffer
         """
         self.write([self.SERIAL_IO])
+        #time.sleep(1)
         resp  = self.read(size)
         data = self.decode(resp)
         return data
-        
+    
+    def readline(self):
+        # buffer =[]
+        n = 0 # No of reads
+
+        while(True):
+            rxcount = self.in_waiting 
+            if rxcount > 0:
+                time.sleep(.01)
+                com = self.serial_read(rxcount)
+                n += 1
+                #Add to buffer
+                self.buffer += com
+            for pos, i in enumerate(self.buffer):
+                    #print(chr(i), end='')
+                if i == 10: 
+                    line=''
+                    linebuf = self.buffer[:pos]
+                    self.buffer = self.buffer[pos+1:]
+                    for c in linebuf:
+                        line += chr(c)
+                    return line + ' ' +str(n) + '- ' + str(len(self.buffer))                    
+                    # return line
+
+
 
     @property
     def in_waiting(self):
@@ -98,6 +136,8 @@ class SERIAL(object):
         Get the number of bytes in the input buffer
         """
         [ack, txcount, rxcount] = self._GetResponseFrame()
+        if ack != 0xFF:
+            raise ValueError('Serial - Read - NACK - Transmissionerror')
         return rxcount
 
     @property
@@ -105,7 +145,7 @@ class SERIAL(object):
         """
         Get the number of bytes in the output buffer
         """
-        [ack, txcount, rxcount] = self._GetResponseFrame(self)
+        [ack, txcount, rxcount] = self._GetResponseFrame()
         return txcount
 
 
