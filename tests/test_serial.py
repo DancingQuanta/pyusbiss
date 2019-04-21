@@ -5,47 +5,61 @@ from usbiss import serial
 
 
 Port='COM3' 
-Baudrate = 300
+Baudrate = 9600
 
 
 def write_serial(connection):
-    string = [0x41, 0x42, 0x43, 0x44]
+    serialString = 'The Quick Bron Fox Jumps Over The Lazy Dog this a very long string of characters.\n' 
+    #serialString='Hello World where the Quick  Pi'
+    
+
+    connection.serial_write(serialString)
+
+def loopback(connection):
+    # serial_write
+    # readline
+    connection.serial_write('The Quick Bron Fox Jumps Over The Lazy Dog this a very long string of characters.\n')
+    time.sleep(.5)
+    resp = connection.readline()
+    print('Response = ', resp)
+
+def loopback2(connection):
+    string = 'Hello World\n'
     connection.serial_write(string)
-
-def read_serial(connection):
-
-    #ser.serial_write([0x41, 0x42, 0x41, 0x42])
-
-    rxcount = connection.in_waiting 
-    if rxcount > 0:
-        com = connection.serial_read(rxcount)
-        # rxcount = 0 na het lezen
-        rxcount = connection.in_waiting 
-        print(com, rxcount)
-
-def read_serial_char(connection):       
-    # gaat niet goed, je kunt niet karakter voor karakter lezen
-    # UPDATE gaat wel, maar niet tussendoor meer het controlblok lezen
-
-    rxcount = connection.in_waiting
-    for i in range(rxcount):
-        #time.sleep(0.5)
-        char = connection.serial_read(1)
-        #time.sleep(0.5)
-        print(char)
-        char = connection.serial_read(3)
-        print(char)
-
-
-
+    time.sleep(.5)
+    # waiting = connection.in_waiting
+    waiting = connection.in_waiting
+    if waiting==0:
+        print('Nothing to receive')
+        return
+    while(waiting > 0):
+        time.sleep(.1)
+        resp = connection.serial_read(waiting)
+        respasc = ''.join(map(chr, resp))
+        print('Resp = ', resp)
+        print('Resp = ', respasc)
+        time.sleep(.1)
+        waiting = connection.in_waiting
 
 if __name__ == '__main__':
+    print(__name__)
     ser = serial.SERIAL(Port, Baudrate)
     # setuptime needed by the usbiss
-    time.sleep(1)
-    n=1
-    while(n<=2):
-        n+=1
-        write_serial(ser)
-        time.sleep(0.5) #time needed to send the string)
-        read_serial_char(ser)
+    #print('pre-sleep')
+    #time.sleep(.5)
+    #print('init')
+    #n=0
+    #while(True):
+        #write_serial(ser)
+        #time.sleep(1)
+        #res = read_serial(ser)
+        #write_serial(ser)
+        #time.sleep(5)
+        #print(n)
+
+     #   l = ser.readline()
+        
+     #   print(l)
+    loopback(ser)
+        
+            

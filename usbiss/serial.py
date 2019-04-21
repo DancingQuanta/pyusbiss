@@ -60,6 +60,8 @@ class SERIAL(object):
         ret  = self._usbiss.read_data(size)
         return ret
 
+    def close(self):
+        self._usbiss.close()
 
     def decode(self,data):
         dec = self._usbiss.decode(data)
@@ -78,8 +80,8 @@ class SERIAL(object):
         parameter : string of data to be send over 
         """
         buffer = list(map(ord, data))
+        n = 0
         while(True):
-            n = 0
             while(True): 
                 # wait unit there are no more characters to send in the USBISS buffer
                 outw = self.out_waiting
@@ -89,11 +91,17 @@ class SERIAL(object):
                     print(str(n), str(outw))
                 else:
                     break
+            if len(buffer) == 0:
+                return
             transmitbuffer = buffer[:30]
             buffer= buffer[30:]
             self._usbiss.write_data([self.SERIAL_IO]+transmitbuffer)
-            if len(buffer) == 0:
-                return
+            time.sleep(2) #9600 baud
+        #    if len(buffer) == 0:
+        #        if n == 1:
+        #            outw = self.out_waiting # Necessary to "clean" the controlblock. otherwise in_waiting
+        #            print('serial_write - out_waiting fired off', str(outw))
+        #        return
 
     def serial_read(self, size):
         """
@@ -125,7 +133,8 @@ class SERIAL(object):
                     self.buffer = self.buffer[pos+1:]
                     for c in linebuf:
                         line += chr(c)
-                    return line + ' ' +str(n) + '- ' + str(len(self.buffer))                    
+                    #return line + ' ' +str(n) + '- ' + str(len(self.buffer))          
+                    return line
                     # return line
 
 
@@ -136,6 +145,7 @@ class SERIAL(object):
         Get the number of bytes in the input buffer
         """
         [ack, txcount, rxcount] = self._GetResponseFrame()
+        print(rxcount, txcount)
         if ack != 0xFF:
             raise ValueError('Serial - Read - NACK - Transmissionerror')
         return rxcount
