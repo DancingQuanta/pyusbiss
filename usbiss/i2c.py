@@ -52,11 +52,6 @@ class I2C(object):
         self._usbiss.mode = [setting, self.IO_TYPE]
         # GdH - geen goede architectuur self.gpio = gpio.GPIO(self._usbiss, c.I2C)
 
-    def open(self):
-        self._usbiss.open()
-
-    def close(self):
-        self._usbiss.close()
 
     def scan(self):
         """
