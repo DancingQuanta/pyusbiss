@@ -8,8 +8,7 @@
 
 """I2C support for USB-ISS"""
 
-from .usbiss import USBISS
-from usbiss  import gpio
+
 import time
 
 
@@ -48,9 +47,10 @@ class I2C(object):
         except KeyError:
             raise ValueError('I2C - This combination of handshaking and speed is not supported : ' + str(handshaking)  + ' '+ str(speed)) 
 
-        self._usbiss = USBISS(port)
-#        self.gpio = gpio.GPIO(self._usbiss, gpio.I2C)
+        # self._usbiss = USBISS(port) - GdH - Terug naar 
+        self._usbiss = port
         self._usbiss.mode = [setting, self.IO_TYPE]
+        # GdH - geen goede architectuur self.gpio = gpio.GPIO(self._usbiss, c.I2C)
 
     def open(self):
         self._usbiss.open()
@@ -91,8 +91,8 @@ class I2C(object):
 
 
     # I2CDevice
-# 30-12-2018
-# Class for individual I2CDevices using the I2C driver for the USBISS
+    # 30-12-2018
+    # Class for individual I2CDevices using the I2C driver for the USBISS
 
 
 
