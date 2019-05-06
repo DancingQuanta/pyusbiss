@@ -12,12 +12,14 @@
 # serial_write(data) – This will write the data passed to the function to the serial port
 # in_waiting – This variable holds the number of bytes in the buffer
 # out waiting - Number of bytes in the out buffer
-# USBISS - FIFO
+# USBISS - FIFO - this means that every byte that is read is immediately removed from the
+# USBISS buffer, this implies that even in_waiting and out_waiting can only be used once 
+# immediately followed by reading the available bytes in the buffer.
 
 
 """Serial support for USB-ISS"""
 
-from usbiss import usbiss
+# from usbiss import usbiss
 import time
 
 class SERIAL(object):
@@ -26,7 +28,7 @@ class SERIAL(object):
     SERIAL_IO   = 0x62 # response ACK (oxFF) or NACK (0x00) - Check on received characters | ACK | TxCount | RxCount
     SERIAL      = 0x01
 
-    def __init__(self, port, baudrate):
+    def __init__(self, usbissdev, baudrate):
         
         divisor = {
         300		:[0x27,	0x0F],
@@ -46,7 +48,7 @@ class SERIAL(object):
         except KeyError:
             raise ValueError('Serial - unknown baudrate;  possible values : (300, 1200, 2400 .. 1000000')
 
-        self._usbiss = usbiss.USBISS(port)
+        self._usbiss = usbissdev
         self._usbiss.mode = [ self.SERIAL, brhb, brlb, 0b10101010] #Configure I/O as input.
         self.buffer=[] # Buffer for readline method
         time.sleep(1)
@@ -76,8 +78,16 @@ class SERIAL(object):
         self.write([self.SERIAL_IO])
         time.sleep(.1)
         resp  = self.read(3)
-        frame = self.decode(resp)
-        return frame
+        [ack, txcount, rxcount] = self.decode(resp)
+        # TODO - Afhandelen van de NACK
+        if rxcount > 0:
+            time.sleep(.01)
+            com = self._serial_read(rxcount)
+            #Add to buffer
+            self.buffer += com
+        return [ack, txcount, len(self.buffer)]
+
+
 
     def serial_write(self, data):
         """
@@ -106,9 +116,9 @@ class SERIAL(object):
             time.sleep(1)
 
 
-    def serial_read(self, size):
+    def _serial_read(self, size):
         """
-        serial_read - bytes read are no longer available for consequtive
+        _serial_read - bytes read are no longer available for consequtive
         reads - (FIFO)
         """
         self.write([self.SERIAL_IO])
@@ -116,6 +126,23 @@ class SERIAL(object):
         data = self.decode(resp)
         return data
     
+    def serial_read(self, size):
+        """
+        serial_read - read bytes from the buffer and remove them from the buffer 
+        """
+        line=''
+        actualsize = len(self.buffer)
+        if size > actualsize:
+            size = actualsize
+        linebuf = self.buffer[:size]
+        self.buffer = self.buffer[size:]
+        for c in linebuf:
+            line += chr(c)
+        return line
+
+
+
+
     def readline(self):
         """
         readline - all data that is available is added to self.buffer. after each read from the
@@ -127,21 +154,16 @@ class SERIAL(object):
 
         while(True):
             rxcount = self.in_waiting 
-            if rxcount > 0:
-                time.sleep(.01)
-                com = self.serial_read(rxcount)
-                n += 1
-                #Add to buffer
-                self.buffer += com
-            for pos, i in enumerate(self.buffer):
+            if rxcount > 0: 
+                for pos, i in enumerate(self.buffer):
      
-                if i == 10: 
-                    line=''
-                    linebuf = self.buffer[:pos]
-                    self.buffer = self.buffer[pos+1:]
-                    for c in linebuf:
-                        line += chr(c)
-                    return line
+                    if i == 10: 
+                        line=''
+                        linebuf = self.buffer[:pos]
+                        self.buffer = self.buffer[pos+1:]
+                        for c in linebuf:
+                            line += chr(c)
+                        return line
 
 
     @property
