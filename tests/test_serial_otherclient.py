@@ -1,20 +1,23 @@
 #! /usr/bin/env python
 # test_i2c.py, part of pyusbiss
 # Copyright (c) 2016, 2018 Andrew Tolmie <andytheseeker@gmail.com>
-# Copyright (c) 2019 Geert de Haan <geertwdehaan@gmail.com>
+# Created by Geert de Haan
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 """
 Geert de Haan / 19-4-2019
 Testing the serial module with client serial program.
 
-Hardware : Connect the Rx  (pin 2) and Tx (pin 3). 
+Hardware : Connect the Rx  (pin 2) and Tx (pin 3) with an external FTDI device 
+(usbiss.Rx --> FTDI.Tx, usbiss.Tx --> FTDI.Rx) and start the 
+tests\SerialClient.py program in a separate DosBox (python SerialClient.py)
 
 """
 
 import sys
 import time
 import unittest
+from usbiss import usbiss
 from usbiss import serial
 
 Port = 'COM3'
@@ -24,10 +27,11 @@ class I2ctestCase(unittest.TestCase):
 
 
     def setUp(self):
-        self.serport = serial.SERIAL(Port, Baudrate)
+        self._usbissdev = usbiss.USBISS(Port)
+        self.serport = serial.SERIAL(self._usbissdev, Baudrate)
 
     def tearDown(self):
-        self.serport.close()
+        self._usbissdev.close()
 
     def test1_loopback_readline(self):
         #testing the
@@ -52,8 +56,7 @@ class I2ctestCase(unittest.TestCase):
             self.assertEqual('Error' , 'Nothing to receive')
         else:
             time.sleep(.1)
-            resp = self.serport.serial_read(waiting)
-            receive = ''.join(map(chr, resp))
+            receive = self.serport.serial_read(waiting)
             self.assertEqual(receive , send)
 
 
