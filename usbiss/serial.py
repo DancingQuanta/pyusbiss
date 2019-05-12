@@ -1,4 +1,8 @@
+#! /usr/bin/env python
 # Serial.py partt of usbiss
+# Copyright (c) 2016, 2018 Andrew Tolmie <andytheseeker@gmail.com>
+# Licensed under the MIT License. See LICENSE file in the project root for full license information.
+
 # Geert de Haan 10-3-2019
 
 # Transmit : max 30 Bytes 
@@ -14,7 +18,8 @@
 # out waiting - Number of bytes in the out buffer
 # USBISS - FIFO - this means that every byte that is read is immediately removed from the
 # USBISS buffer, this implies that even in_waiting and out_waiting can only be used once 
-# immediately followed by reading the available bytes in the buffer.
+# immediately followed by reading the available bytes in the buffer. 
+# This is solved by using an own readbuffer that holds all received character
 
 
 """Serial support for USB-ISS"""
@@ -49,8 +54,10 @@ class SERIAL(object):
             raise ValueError('Serial - unknown baudrate;  possible values : (300, 1200, 2400 .. 1000000')
 
         self._usbiss = usbissdev
-        self._usbiss.mode = [ self.SERIAL, brhb, brlb, 0b10101010] #Configure I/O as input.
-        self.buffer=[] # Buffer for readline method
+        self._usbiss.mode = [ self.SERIAL, brhb, brlb, 0b10101010] #Configure all I/O as input by default.
+        # ReadBuffer for all incoming characters from the usbiss. All read methodes use this buffer for actual reading the received chars.
+        self.buffer=[]
+        # Allow the device time to setup
         time.sleep(1)
 
     def write(self, data):
@@ -79,15 +86,14 @@ class SERIAL(object):
         time.sleep(.1)
         resp  = self.read(3)
         [ack, txcount, rxcount] = self.decode(resp)
-        # TODO - Afhandelen van de NACK
+        if ack != 0xFF:
+            raise ValueError('Serial - GetResponseFrame - NACK received - Transmissionerror')
         if rxcount > 0:
             time.sleep(.01)
             com = self._serial_read(rxcount)
             #Add to buffer
             self.buffer += com
         return [ack, txcount, len(self.buffer)]
-
-
 
     def serial_write(self, data):
         """
@@ -97,21 +103,20 @@ class SERIAL(object):
         is longer than 30 the string is send in multple
         blocks.
         """
-        buffer = list(map(ord, data))
-        n = 0
+        writebuffer = list(map(ord, data))
         while(True):
             while(True): 
                 # wait unit there are no more characters to send in the USBISS buffer
                 outw = self.out_waiting
-                n+=1
                 if outw > 0:
                     time.sleep(0.5)
                 else:
                     break
-            if len(buffer) == 0:
+            if len(writebuffer) == 0:
                 return
-            transmitbuffer = buffer[:30]
-            buffer= buffer[30:]
+            # transmitbuffer of max 30 chars
+            transmitbuffer = writebuffer[:30]
+            writebuffer= writebuffer[30:]
             self._usbiss.write_data([self.SERIAL_IO]+transmitbuffer)
             time.sleep(1)
 
@@ -119,7 +124,7 @@ class SERIAL(object):
     def _serial_read(self, size):
         """
         _serial_read - bytes read are no longer available for consequtive
-        reads - (FIFO)
+        reads - (FIFO) - For internal use only !
         """
         self.write([self.SERIAL_IO])
         resp  = self.read(size)
@@ -128,10 +133,12 @@ class SERIAL(object):
     
     def serial_read(self, size):
         """
-        serial_read - read bytes from the buffer and remove them from the buffer 
+        serial_read - return and remove bytes from the readbuffer.
         """
         line=''
+        # How many chars in the buffer
         actualsize = len(self.buffer)
+        # maximal the avialable chars
         if size > actualsize:
             size = actualsize
         linebuf = self.buffer[:size]
@@ -140,23 +147,18 @@ class SERIAL(object):
             line += chr(c)
         return line
 
-
-
-
     def readline(self):
         """
         readline - all data that is available is added to self.buffer. after each read from the
         serial port self.buffer is checked for newlines. If found the function returns the string 
         up until the first newline.
-        Subsequently calling readline() will produce the next bufferd line. 
+        Subsequently calling readline() will produce the next bufferd lines. 
         """
-        n = 0 # No of reads
-
         while(True):
             rxcount = self.in_waiting 
             if rxcount > 0: 
                 for pos, i in enumerate(self.buffer):
-     
+                    # look for the \n
                     if i == 10: 
                         line=''
                         linebuf = self.buffer[:pos]
@@ -169,21 +171,15 @@ class SERIAL(object):
     @property
     def in_waiting(self):
         """
-        Get the number of bytes in the input buffer
-        As the controlframe is deleted (FIFO principle) it is very important 
-        that imediately after in_waiting a serial_read is performed.
+        Get the number of bytes in the input buffer.
         """
         [ack, txcount, rxcount] = self._GetResponseFrame()
-        if ack != 0xFF:
-            raise ValueError('Serial - Read - NACK - Transmissionerror')
         return rxcount
 
     @property
     def out_waiting(self):
         """
         Get the number of bytes in the output buffer
-        As the controlframe is deleted (FIFO principle) it is very important 
-        that imediately after in_waiting a serial_read is performed.
         """
         [ack, txcount, rxcount] = self._GetResponseFrame()
         return txcount

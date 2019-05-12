@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# test_i2c.py, part of pyusbiss
+# test_serial_otherclient - GPIO.py, part of pyusbiss
 # Copyright (c) 2016, 2018 Andrew Tolmie <andytheseeker@gmail.com>
 # Created by Geert de Haan
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -32,7 +32,7 @@ class I2ctestCase(unittest.TestCase):
         self._usbissdev = usbiss.USBISS(Port)
         #initialize the serial port
         self.serport = serial.SERIAL(self._usbissdev, Baudrate)
-        # Initialize the GPIO, only pins 3 and 4 are available in combined witrh serial mode
+        # Initialize the GPIO, only pins 3 and 4 are available if combined with serial mode
         self.io2 = gpio.GPIO(self._usbissdev, gpio.SERIAL)
         # Configure Pin3 as Out, Pin4 as IN, set Pin3 as Low
         self.io2.setup_pins({3:gpio.OUT, 4: gpio.IN}, {3:gpio.LOW})

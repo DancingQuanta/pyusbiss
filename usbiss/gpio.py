@@ -69,21 +69,13 @@ class GPIO(object):
             raise ValueError ('GPIO - pin %s is reserved for Serial operation' % str(pin))
 
 
-    def open(self):
-        self._usbiss.open()
-
-
-    def close(self):
-        self._usbiss.close()
-
-
     def configure(self):
         """
         Configure GPIO controller
         """
         self._usbiss.mode = [self.IO_CHANGE, self.ControlRegister]
 
-    def send_dataregister(self):
+    def _send_dataregister(self):
         """
         Send the dataregister to the USBISS device
         """
@@ -135,7 +127,7 @@ class GPIO(object):
         for pin, value in values.items():
             self._check_pins_and_con_mode(pin) # Check if this pin may be changed in this mode (I2C, SERIAL, FULL)
             self._output_pin(pin, value)
-        self.send_dataregister()
+        self._send_dataregister()
 
 
     def _output_pin(self, pin, level):
@@ -155,7 +147,7 @@ class GPIO(object):
         """
         self._check_pins_and_con_mode(pin) 
         self._output_pin(pin, level)
-        self.send_dataregister()
+        self._send_dataregister()
 
     def output_pins(self, pins):
         """Set multiple pins high or low at once.  Pins should be a dict of pin
@@ -165,7 +157,7 @@ class GPIO(object):
         for pin, value in iter(pins.items()):
             self._check_pins_and_con_mode(pin) 
             self._output_pin(pin, value)
-        self.send_dataregister()
+        self._send_dataregister()
 
 
     def input(self, pin):

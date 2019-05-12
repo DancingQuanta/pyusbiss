@@ -7,7 +7,7 @@
 Geert de Haan / 23-3-2019
 Testing gpio module, part of pyusbiss
 
-Hardware :
+** Hardware : **
 
 USBISS 
 - Led on pin 1 (configured as output)
@@ -33,14 +33,13 @@ class GPIOtestCase(unittest.TestCase):
     """ GPIO functions testcase """
 
     def setUp(self):
-        self._usbiss = usbiss.USBISS(Port)
-        self.io4 = gpio.GPIO(self._usbiss)
+        self._usbissdev = usbiss.USBISS(Port)
+        self.io4 = gpio.GPIO(self._usbissdev)
         self.io4.setup_pins({1:gpio.OUT, 2:gpio.OUT, 3:gpio.IN, 4: gpio.IN}, {1:gpio.LOW, 2:gpio.LOW})
-        self.assertIsInstance(self._usbiss, usbiss.USBISS)
         self.assertIsInstance(self.io4, gpio.GPIO)
 
     def tearDown(self):
-        self._usbiss.close()
+        self._usbissdev.close()
 
     def test1_loopback_pin1_pin3(self):
         # set pin 1 HIGH, check result on pin 3

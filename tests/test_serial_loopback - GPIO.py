@@ -1,7 +1,6 @@
 #! /usr/bin/env python
-# test_i2c.py, part of pyusbiss
+# test_serial_loop - GPIO.py, part of pyusbiss
 # Copyright (c) 2016, 2018 Andrew Tolmie <andytheseeker@gmail.com>
-# Created by Geert de Haan
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 """
