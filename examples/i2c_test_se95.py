@@ -1,7 +1,7 @@
-# from i2c import I2C
+
 import i2c as I2C
 import time
-import I2CDevice as I2CDevice 
+
 
 
 # SE95 Registers
@@ -39,22 +39,7 @@ def readconf():
     t = se95.readU8(CONF)
     print(t)
 
-def writepattern():
-    pat1 = [0x0f]
-    pat2= [0xf0]
-    for h in range(255):
-        for i in range(255):
-            if i % 2 == 1:
-                data = pat1
-            else:
-                data = pat2
-            lc256.writeMem(h, i, len(data), data)
 
-def readpattern():
-    t = lc256.readMem(0x00, 0x00, 64)
-    for i in range(255):
-        t = lc256.readMem(0x00, i, 1)
-        print(t)
 
 writepattern()
 #readpattern()

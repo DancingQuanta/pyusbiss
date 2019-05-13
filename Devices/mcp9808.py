@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-# Adapted for use with the USBISS - I2C module by Geert de Haan
+# Adapted for use with the USBISS - I2C module by Geert de Haan (04-2019)
 
 import logging
 import math
