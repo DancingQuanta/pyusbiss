@@ -17,7 +17,9 @@ Test 6 - Connect pin 7 (output) with pin 6 (input) for the loopbacktest
 import sys
 import time
 import unittest
+from usbiss import usbiss
 from usbiss import i2c
+
 
 # MCP23008 Registers
 
@@ -38,7 +40,7 @@ Port = 'COM3'
 # I2C parameters
 Handshaking ='S'
 Speed = 100
-# MCP23008 Adress
+# MCP23008 Address
 McpAddress = 64
 class I2ctestCase(unittest.TestCase):
     """ I2C driver register functions testcase """
@@ -103,12 +105,13 @@ class I2ctestCase(unittest.TestCase):
         return data
 
     def setUp(self):
-        self.i2cchannel = i2c.I2C(Port, Handshaking, Speed)
+        self.usbissdev = usbiss.USBISS(Port)
+        self.i2cchannel = i2c.I2C(self.usbissdev, Handshaking, Speed)
         print(self.i2cchannel._usbiss.__repr__)
         self.mcp23008 = i2c.I2CDevice(self.i2cchannel, McpAddress)
 
     def tearDown(self):
-        self.i2cchannel.close()
+        self.usbissdev.close()
 
     def test1_i2device_ping(self):
         self.assertEqual(self.mcp23008.ping(), True, 'Device not found at i2c Address : %s' % McpAddress)

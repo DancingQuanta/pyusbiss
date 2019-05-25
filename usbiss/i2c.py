@@ -1,6 +1,3 @@
-# IO - Based on Vlieland Brainwave
-#
-
 # I2C.py - part of pyusbiss
 # Copyright (c) 2016, 2018 Andrew Tolmie <andytheseeker@gmail.com>
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -26,7 +23,7 @@ class I2C(object):
 
 
 
-    def __init__(self, port, handshaking, speed):
+    def __init__(self, usbissdev, handshaking, speed):
         """
 
         """
@@ -47,10 +44,9 @@ class I2C(object):
         except KeyError:
             raise ValueError('I2C - This combination of handshaking and speed is not supported : ' + str(handshaking)  + ' '+ str(speed)) 
 
-        # self._usbiss = USBISS(port) - GdH - Terug naar 
-        self._usbiss = port
+        self._usbiss = usbissdev
         self._usbiss.mode = [setting, self.IO_TYPE]
-        # GdH - geen goede architectuur self.gpio = gpio.GPIO(self._usbiss, c.I2C)
+
 
 
     def scan(self):
@@ -62,15 +58,13 @@ class I2C(object):
         response=[]
         for devadr in range(255): # ToDo : Check range.
             self.write_data([self.I2C_TEST, devadr])
-
             resp = self.read_data(1)
             resp = self.decode(resp)
             if resp != [0]:
                 response.append(devadr)
-
         return response
 
-    # GdH 5-1-2019 - TODO - is this a good solution ? 
+    # GdH 5-1-2019 
     def write_data(self, data):
         self._usbiss.write_data(data)
         
@@ -104,14 +98,13 @@ class I2CDevice(object):
 
     def __init__(self, usbissdevice, addr):
 
-
-        
         self._usbissi2c = usbissdevice
-        self._addr      = addr # 8 bits adress !
+        self._addr      = addr # 8 bits Address !
         self._addr_read = addr + 1
     
     def ping(self):
             """
+            ping the Device, returns True the device is available at the specified Address
             """
             self._usbissi2c.write_data([self.I2C_TEST, self._addr])
             resp = self._usbissi2c.read_data(1)
@@ -121,6 +114,20 @@ class I2CDevice(object):
             else:    
                 response = False
             return response
+
+    def readRaw8(self):
+        """
+        Read single byte for non-registered devices, such as the Philips PCF8574 I/O chip.
+         """
+
+        self._usbissi2c.write_data([self.I2C_SGL, self._addr_read]) 
+        # time.sleep(0.1)
+        resp = self._usbissi2c.read_data(1) # Reads 1 byte / 8 bits
+        resp = self._usbissi2c.decode(resp)
+        if len(resp) > 0:
+            return resp[0]
+        else: 
+            return resp
 
     def writeRaw8(self, value):
         """
@@ -135,73 +142,6 @@ class I2CDevice(object):
         resp = self._usbissi2c.decode(resp)
         if resp != [1]:
             raise RuntimeError("I2CDevice - writeRaw8 - TransmissionError")
-
-    def write8(self, register, value):
-        """Write an 8-bit value to the specified register."""
-        value = value & 0xFF
-        self._usbissi2c.write_data([self.I2C_AD1, self._addr, register, 1 , value])
-        resp = self._usbissi2c.read_data(1)
-        resp = self._usbissi2c.decode(resp)
-        if resp != [1]:
-            raise RuntimeError("I2CDevice - write8 - TransmissionError")
-
-    def write16(self, register, value,  little_endian=True):
-        """Write a 16-bit value to the specified register."""
-        value = value & 0xFFFF
-        value_low  = value & 0xFF
-        value_high = (value >> 8) & 0xFF
-        if little_endian:
-            value = [value_low, value_high]
-        else:
-            value = [value_high, value_low]
-
-        self._usbissi2c.write_data([self.I2C_AD1, self._addr, register, 2 ]+value)
-        resp = self._usbissi2c.read_data(1)
-        resp = self._usbissi2c.decode(resp)
-        if resp != [1]:
-            raise RuntimeError("I2CDevice - write16 - TransmissionError")
-    
-
-    def writeList(self, register, data):
-        """Write bytes to the specified register."""
-        # Data is a bytearray
-        length = len(data)
-        self._usbissi2c.write_data([self.I2C_AD1, self._addr, register, length] + data)
-        # ToDo check op data, concatenaten van de list tot een reeks getallen ? Testen !!!
-        resp = self._usbissi2c.read_data(1)
-        resp = self._usbissi2c.decode(resp)
-        if resp != [1]:
-            raise RuntimeError("I2CDevice - writeList - TransmissionError")
-
-
-    def readList(self, register, length):
-        """Read a length number of bytes from the specified register.  Results
-        will be returned as a bytearray."""
-        self._usbissi2c.write_data([self.I2C_AD1, self._addr_read, register, length]) 
-        resp = self._usbissi2c.read_data(length)
-        resp = self._usbissi2c.decode(resp)
-        if len(resp) > 0:
-            return resp
-        else: 
-            return resp
-
-    def readRaw8(self):
-        """
-        :returns: 1 byte of data, emptylist ?? TODO Check with unittest
-
-        Read single byte for non-registered devices, such as the Philips PCF8574 I/O chip.
-        ADAFruit - Read an 8-bit value on the bus (without register).
-        """
-
-        self._usbissi2c.write_data([self.I2C_SGL, self._addr_read]) 
-        # time.sleep(0.1)
-        resp = self._usbissi2c.read_data(1) # Reads 1 byte / 8 bits
-        resp = self._usbissi2c.decode(resp)
-        if len(resp) > 0:
-            return resp[0]
-        else: 
-            return resp
-    
 
     def readU8(self, register):
         """Read an unsigned byte from the specified register."""
@@ -219,6 +159,15 @@ class I2CDevice(object):
         if result > 127:
             result -= 256
         return result
+
+    def write8(self, register, value):
+        """Write an 8-bit value to the specified register."""
+        value = value & 0xFF
+        self._usbissi2c.write_data([self.I2C_AD1, self._addr, register, 1 , value])
+        resp = self._usbissi2c.read_data(1)
+        resp = self._usbissi2c.decode(resp)
+        if resp != [1]:
+            raise RuntimeError("I2CDevice - write8 - TransmissionError")
 
     def readU16(self, register, little_endian=True):
         """Read an unsigned 16-bit value from the specified register, with the
@@ -242,6 +191,45 @@ class I2CDevice(object):
             result -= 65536
         return result
 
+    def write16(self, register, value,  little_endian=True):
+        """Write a 16-bit value to the specified register."""
+        value = value & 0xFFFF
+        value_low  = value & 0xFF
+        value_high = (value >> 8) & 0xFF
+        if little_endian:
+            value = [value_low, value_high]
+        else:
+            value = [value_high, value_low]
+
+        self._usbissi2c.write_data([self.I2C_AD1, self._addr, register, 2 ]+value)
+        resp = self._usbissi2c.read_data(1)
+        resp = self._usbissi2c.decode(resp)
+        if resp != [1]:
+            raise RuntimeError("I2CDevice - write16 - TransmissionError")
+    
+    def readList(self, register, length):
+        """Read a length number of bytes from the specified register.  Results
+        will be returned as a bytearray."""
+        self._usbissi2c.write_data([self.I2C_AD1, self._addr_read, register, length]) 
+        resp = self._usbissi2c.read_data(length)
+        resp = self._usbissi2c.decode(resp)
+        if len(resp) > 0:
+            return resp
+        else: 
+            return resp
+
+    def writeList(self, register, data):
+        """Write bytes to the specified register."""
+        # Data is a bytearray
+        length = len(data)
+        self._usbissi2c.write_data([self.I2C_AD1, self._addr, register, length] + data)
+        # ToDo check op data, concatenaten van de list tot een reeks getallen ? Testen !!!
+        resp = self._usbissi2c.read_data(1)
+        resp = self._usbissi2c.decode(resp)
+        if resp != [1]:
+            raise RuntimeError("I2CDevice - writeList - TransmissionError")
+
+
     def readU16LE(self, register):
         """Read an unsigned 16-bit value from the specified register, in little
         endian byte order."""
@@ -263,9 +251,28 @@ class I2CDevice(object):
         return self.readS16(register, little_endian=False)
 
     # These functions (writeMem, readMem) are not part of the Adafruit protocol library. Specific for the USBISS device
-    def writeMem(self, AdressHighByte, AdressLowByte, length, data):
+
+
+    def readMem(self, AddressHighByte, AddressLowByte, length):
         """
-        AdressHighByte, AdressLowByte : Adress of the memory location within the EPROM.
+        AddressHighByte, AddressLowByte : Address of the memory location within the EPROM.
+        lenght                        : no of bytes to receive
+
+        Read 2 byte addressed devices, eeproms from 32kbit (4kx8) and up.
+        The maximum number of data bytes requested should not exceed 64 so as not to overflow the USB-ISS's internal buffer.
+        """
+        if length > 64:
+            raise ValueError("I2CDevice - readMem - max 64 bytes exceeded.")
+
+        self._usbissi2c.write_data([self.I2C_AD2, self._addr_read, AddressHighByte, AddressLowByte, length]) 
+
+        resp = self._usbissi2c.read_data(length)
+        resp = self._usbissi2c.decode(resp)
+        return resp
+
+    def writeMem(self, AddressHighByte, AddressLowByte, length, data):
+        """
+        AddressHighByte, AddressLowByte : Address of the memory location within the EPROM.
         lenght                        : length of the transmitted data
         data                          : bytearray of data
 
@@ -275,7 +282,7 @@ class I2CDevice(object):
         if length > 59:
             raise ValueError("I2CDevice - writeMem - max 59 bytes exceeded.")
         
-        self._usbissi2c.write_data([self.I2C_AD2, self._addr, AdressHighByte, AdressLowByte, length] + data) 
+        self._usbissi2c.write_data([self.I2C_AD2, self._addr, AddressHighByte, AddressLowByte, length] + data) 
 
         # Avoid transmission errors.
         time.sleep(0.05)
@@ -283,26 +290,7 @@ class I2CDevice(object):
         resp = self._usbissi2c.read_data(1)
         resp = self._usbissi2c.decode(resp)
         if resp != [1]:
-            raise RuntimeError("I2CDevice - writeList - TransmissionError - " + str(AdressHighByte) + '-' + str(AdressLowByte)) 
-
-    def readMem(self, AdressHighByte, AdressLowByte, length):
-        """
-        AdressHighByte, AdressLowByte : Adress of the memory location within the EPROM.
-        lenght                        : no of bytes to receive
-
-        Read 2 byte addressed devices, eeproms from 32kbit (4kx8) and up.
-        The maximum number of data bytes requested should not exceed 64 so as not to overflow the USB-ISS's internal buffer.
-        """
-        if length > 64:
-            raise ValueError("I2CDevice - readMem - max 64 bytes exceeded.")
-
-        self._usbissi2c.write_data([self.I2C_AD2, self._addr_read, AdressHighByte, AdressLowByte, length]) 
-
-        resp = self._usbissi2c.read_data(length)
-        resp = self._usbissi2c.decode(resp)
-        return resp
-
-
+            raise RuntimeError("I2CDevice - writeList - TransmissionError - " + str(AddressHighByte) + '-' + str(AddressLowByte)) 
 
     
 

@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# test_i2c.py, part of pyusbiss
+# test_i2c_noregister(SGL)_PCF8574.py, part of pyusbiss
 # Copyright (c) 2016, 2018 Andrew Tolmie <andytheseeker@gmail.com>
 # Copyright (c) 2019 Geert de Haan <geertwdehaan@gmail.com>
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
@@ -15,6 +15,7 @@ Hardware : Testboard met PCF8574, pin 7 connected to pin 0 for loopbacktest
 import time
 import sys
 import unittest
+from usbiss import usbiss
 from usbiss import i2c
 
 Port = 'COM3'
@@ -43,7 +44,8 @@ class I2CTestCaseSGL_noregister(unittest.TestCase):
         return data
 
     def setUp(self):
-        self.i2cchannel = i2c.I2C(Port, 'H', 100)
+        self._usbissdev = usbiss.USBISS(Port) 
+        self.i2cchannel = i2c.I2C(self._usbissdev, 'H', 100)
         self.assertIsInstance(self.i2cchannel, i2c.I2C)
         # print(self.i2cchannel._usbiss.__repr__)
         self.pcf8574 = i2c.I2CDevice(self.i2cchannel, Address)
@@ -51,7 +53,7 @@ class I2CTestCaseSGL_noregister(unittest.TestCase):
         self.IODIR = 0x0F
 
     def tearDown(self):
-        self.i2cchannel.close()
+        self._usbissdev.close()
 
     def test1_devicepresent(self):
         # time.sleep(1)
