@@ -12,8 +12,8 @@ class SPI(object):
     """SPI operating mode of USBISS
     """
 
-    def __init__(self, port, mode=0, max_speed_hz=3000000):
-        self._usbiss = USBISS(port)
+    def __init__(self, usbissdev, mode=0, max_speed_hz=3000000):
+        self._usbiss = usbissdev
 
         self.sck_divisor = 1
 
