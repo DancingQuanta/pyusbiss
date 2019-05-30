@@ -2,7 +2,7 @@
 # Copyright (c) 2016, 2018 Andrew Tolmie <andytheseeker@gmail.com>
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-__version__ = '0.1.2'
+__version__ = '0.2.2'
 __title__ = 'pyusbiss'
 __description__ = 'USB-ISS Multifunction USB Communications Module USBISS device driver (pure Python)'
 __uri__ = 'http://github.com/DancingQuanta/pyusbiss'

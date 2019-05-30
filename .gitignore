@@ -13,6 +13,7 @@ build/
 develop-eggs/
 dist/
 downloads/
+Scripts/
 eggs/
 .eggs/
 lib/
@@ -57,3 +58,13 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# GdH
+.bat
+.exe
+.DLL
+.ps1
+
+# vsc
+.vscode/
+.code-workspace
